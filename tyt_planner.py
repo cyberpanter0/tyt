@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import json
 import io
 import os
-import fpdf2
+from fpdf2 import FPDF
 
 # Groq AI Client - Hata kontrolü ile
 @st.cache_resource
@@ -101,36 +101,63 @@ KONU_VERILERI = {
 }
 
 def get_ai_suggestion(konu_analizi):
-    """Groq AI'dan çalışma önerisi al"""
+    """Groq AI'dan çalışma önerisi al - Optimize edilmiş prompt"""
     if not client:
         return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
     
     try:
-        # En düşük puanlı (en iyi) 3 konu ve en yüksek puanlı (en kötü) 3 konu
+        # En düşük puanlı (en iyi) 3 konu ve en yüksek puanlı (en kötü) 5 konu
         sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'])
         iyi_konular = sorted_topics[:3]
-        kotu_konular = sorted_topics[-3:]
+        kotu_konular = sorted_topics[-5:]
+        
+        # Ders bazında analiz
+        ders_analizi = {}
+        for konu, info in konu_analizi.items():
+            ders = info['ders']
+            if ders not in ders_analizi:
+                ders_analizi[ders] = {'toplam_puan': 0, 'konu_sayisi': 0}
+            ders_analizi[ders]['toplam_puan'] += info['oncelik_puani']
+            ders_analizi[ders]['konu_sayisi'] += 1
+        
+        # Ortalama puanları hesapla
+        for ders in ders_analizi:
+            ders_analizi[ders]['ortalama'] = ders_analizi[ders]['toplam_puan'] / ders_analizi[ders]['konu_sayisi']
+        
+        en_kotu_ders = max(ders_analizi.items(), key=lambda x: x[1]['ortalama'])
         
         prompt = f"""
-        Bir TYT öğrencisine çalışma önerisi ver. Analiz sonuçları:
+        Sen deneyimli bir TYT koçusun. Bir öğrencinin performans analizi şu şekilde:
         
-        EN İYİ KONULAR:
-        {', '.join([f"{konu} (Puan: {info['oncelik_puani']:.1f})" for konu, info in iyi_konular])}
+        🔴 ÖNCELIKLI KONULAR (En kötü 5):
+        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Puan: {info['oncelik_puani']:.1f}" for konu, info in kotu_konular])}
         
-        EN KÖTÜ KONULAR:
-        {', '.join([f"{konu} (Puan: {info['oncelik_puani']:.1f})" for konu, info in kotu_konular])}
+        🟢 İYI DURUMDA (En iyi 3):
+        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Puan: {info['oncelik_puani']:.1f}" for konu, info in iyi_konular])}
         
-        Kısa ve öz bir öneri ver (maksimum 150 kelime).
+        📊 EN PROBLEMLI DERS: {en_kotu_ders[0]} (Ortalama: {en_kotu_ders[1]['ortalama']:.1f})
+        
+        Aşağıdaki kriterlere göre KISA ve ÖZGÜN bir çalışma stratejisi öner:
+        1. Hangi konulara ne kadar süre ayırmalı?
+        2. Hangi sırayla çalışmalı?
+        3. Hangi çalışma teknikleri kullanmalı?
+        4. Motivasyon artırıcı öneriler
+        
+        Maksimum 200 kelime, samimi ve motive edici bir dille yaz.
         """
         
         chat_completion = client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "Sen bir TYT koçusun. Öğrencilere kısa ve pratik çalışma önerileri veriyorsun."},
+                {
+                    "role": "system", 
+                    "content": """Sen uzman bir TYT koçusun. Öğrencilere kişiselleştirilmiş, pratik ve motive edici çalışma stratejileri veriyorsun. 
+                    Önerilerini somut, uygulanabilir ve pozitif bir dille sun. Sadece genel laflar değil, spesifik eylem planları ver."""
+                },
                 {"role": "user", "content": prompt}
             ],
             model="llama3-70b-8192",
-            max_tokens=200,
-            temperature=0.7
+            max_tokens=250,
+            temperature=0.8
         )
         
         return chat_completion.choices[0].message.content
@@ -216,72 +243,74 @@ def excel_export(program_df):
     return output.getvalue()
 
 def simple_pdf_export(program_df):
-    """Basit PDF raporu oluştur"""
+    """Basit PDF raporu oluştur - Düzeltilmiş"""
     try:
-        from fpdf import FPDF
-        
-        class PDF(FPDF):
-            def __init__(self):
-                super().__init__()
-                self.add_font('Arial', '', 'arial.ttf', uni=True)
-                self.add_font('Arial', 'B', 'arialbd.ttf', uni=True)
-                self.add_font('Arial', 'I', 'ariali.ttf', uni=True)
-                
+        class SimplePDF(FPDF):
             def header(self):
                 self.set_font('Arial', 'B', 16)
-                self.cell(0, 10, 'TYT Çalışma Programı', 0, 1, 'C')
+                self.cell(0, 10, 'TYT Calisma Programi', align='C')
                 self.ln(10)
             
             def footer(self):
                 self.set_y(-15)
                 self.set_font('Arial', 'I', 8)
-                self.cell(0, 10, f'Sayfa {self.page_no()}', 0, 0, 'C')
+                self.cell(0, 10, f'Sayfa {self.page_no()}', align='C')
         
-        pdf = PDF()
+        pdf = SimplePDF()
         pdf.add_page()
         pdf.set_font('Arial', '', 10)
         
-        pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}', 0, 1)
-        pdf.ln(5)
+        # Rapor tarihi
+        pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}')
+        pdf.ln(10)
         
+        # Başlık
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, 'CALISMA PROGRAMI')
+        pdf.ln(10)
+        
+        # Tablo başlıkları
+        pdf.set_font('Arial', 'B', 8)
+        pdf.cell(25, 8, 'Tarih', 1)
+        pdf.cell(20, 8, 'Ders', 1)
+        pdf.cell(60, 8, 'Konu', 1)
+        pdf.cell(20, 8, 'Oncelik', 1)
+        pdf.cell(15, 8, 'Zorluk', 1)
+        pdf.cell(10, 8, 'D', 1)
+        pdf.cell(10, 8, 'Y', 1)
+        pdf.cell(10, 8, 'B', 1)
+        pdf.ln()
+        
+        # Veri satırları
+        pdf.set_font('Arial', '', 7)
         for _, row in program_df.iterrows():
-            pdf.cell(0, 8, f"{row['Tarih']} - {row['Ders']} - {row['Konu']}", 0, 1)
+            # Unicode karakterleri ASCII'ye çevir
+            ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
+            konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u').replace('–', '-')
+            zorluk = str(row['Zorluk']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
+            
+            # Konu adını kısalt
+            if len(konu) > 35:
+                konu = konu[:32] + "..."
+            
+            pdf.cell(25, 6, str(row['Tarih']), 1)
+            pdf.cell(20, 6, ders, 1)
+            pdf.cell(60, 6, konu, 1)
+            pdf.cell(20, 6, f"{row['Öncelik Puanı']:.1f}", 1)
+            pdf.cell(15, 6, zorluk, 1)
+            pdf.cell(10, 6, str(row['Doğru']), 1)
+            pdf.cell(10, 6, str(row['Yanlış']), 1)
+            pdf.cell(10, 6, str(row['Boş']), 1)
+            pdf.ln()
         
-        return pdf.output(dest='S').encode('latin-1')
-    except ImportError:
+        return pdf.output()
+    except Exception as e:
+        st.error(f"PDF oluşturma hatası: {str(e)}")
         return None
-    except Exception:
-        # Fallback - font dosyaları yoksa basit metin
-        try:
-            from fpdf2 import FPDF
-            
-            class SimplePDF(FPDF):
-                def header(self):
-                    self.set_font('Arial', 'B', 16)
-                    self.cell(0, 10, 'TYT Calisma Programi', 0, 1, 'C')
-                    self.ln(10)
-                
-                def footer(self):
-                    self.set_y(-15)
-                    self.set_font('Arial', 'I', 8)
-                    self.cell(0, 10, f'Sayfa {self.page_no()}', 0, 0, 'C')
-            
-            pdf = SimplePDF()
-            pdf.add_page()
-            pdf.set_font('Arial', '', 10)
-            
-            pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}', 0, 1)
-            pdf.ln(5)
-            
-            for _, row in program_df.iterrows():
-                # Unicode karakterleri ASCII'ye çevir
-                ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-                konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u').replace('–', '-')
-                pdf.cell(0, 8, f"{row['Tarih']} - {ders} - {konu}", 0, 1)
-            
-            return pdf.output(dest='S').encode('latin-1')
-        except Exception:
-            return None
+
+def otomatik_hesapla_bos(dogru, yanlis, toplam_soru):
+    """Doğru ve yanlış girildikten sonra boş soruları otomatik hesapla"""
+    return max(0, toplam_soru - dogru - yanlis)
 
 # Streamlit arayüzü
 st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
@@ -293,13 +322,14 @@ st.markdown("---")
 with st.sidebar:
     st.header("🤖 AI Koçun")
     if client:
-        if st.button("AI Önerisi Al"):
+        if st.button("🔥 Kişisel Strateji Al"):
             if 'analiz_sonucu' in st.session_state:
-                with st.spinner("AI analiz yapıyor..."):
+                with st.spinner("AI senin için özel strateji hazırlıyor..."):
                     suggestion = get_ai_suggestion(st.session_state['analiz_sonucu'])
+                    st.success("🎯 **Senin İçin Özel Strateji:**")
                     st.info(suggestion)
             else:
-                st.warning("Önce veri giriş yapın!")
+                st.warning("⚠️ Önce veri giriş yapın!")
     else:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
@@ -335,28 +365,51 @@ with tab1:
                     
                     with cols[col_idx]:
                         st.markdown(f"**{konu}**")
-                        st.caption(f"Zorluk: {bilgi['zorluk']}")
+                        st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
                         
                         if konu not in st.session_state.veriler[ders]:
                             st.session_state.veriler[ders][konu] = {'dogru': 0, 'yanlis': 0, 'bos': 0}
                         
-                        dogru = st.number_input(f"Doğru", min_value=0, key=f"{ders}_{konu}_dogru", 
+                        toplam_soru = bilgi['ortalama_soru']
+                        
+                        dogru = st.number_input(f"Doğru", 
+                                              min_value=0, 
+                                              max_value=toplam_soru,
+                                              key=f"{ders}_{konu}_dogru", 
                                               value=st.session_state.veriler[ders][konu]['dogru'])
-                        yanlis = st.number_input(f"Yanlış", min_value=0, key=f"{ders}_{konu}_yanlis",
+                        
+                        yanlis = st.number_input(f"Yanlış", 
+                                               min_value=0, 
+                                               max_value=max(0, toplam_soru - dogru),
+                                               key=f"{ders}_{konu}_yanlis",
                                                value=st.session_state.veriler[ders][konu]['yanlis'])
-                        bos = st.number_input(f"Boş", min_value=0, key=f"{ders}_{konu}_bos",
-                                            value=st.session_state.veriler[ders][konu]['bos'])
+                        
+                        # Boş soruları otomatik hesapla
+                        bos = otomatik_hesapla_bos(dogru, yanlis, toplam_soru)
+                        
+                        # Boş soruları göster (sadece görüntü için)
+                        st.text_input(f"Boş", 
+                                    value=str(bos),
+                                    key=f"{ders}_{konu}_bos_display",
+                                    disabled=True)
                         
                         st.session_state.veriler[ders][konu] = {
                             'dogru': dogru,
                             'yanlis': yanlis,
                             'bos': bos
                         }
+                        
+                        # Toplam kontrol
+                        toplam = dogru + yanlis + bos
+                        if toplam == toplam_soru:
+                            st.success(f"✅ Toplam: {toplam}")
+                        else:
+                            st.error(f"❌ Toplam: {toplam}/{toplam_soru}")
 
 with tab2:
     st.header("📊 Analiz Sonuçları")
     
-    if st.button("Analiz Et"):
+    if st.button("🔍 Analiz Et"):
         analiz_sonucu = analiz_et(st.session_state.veriler)
         st.session_state.analiz_sonucu = analiz_sonucu
         
@@ -409,7 +462,7 @@ with tab3:
         with col2:
             gun_sayisi = st.number_input("Kaç Gün Çalışacaksınız?", min_value=1, max_value=365, value=30)
         
-        if st.button("Program Oluştur"):
+        if st.button("📋 Program Oluştur"):
             program = program_olustur(st.session_state.analiz_sonucu, baslangic_tarihi, gun_sayisi)
             program_df = pd.DataFrame(program)
             st.session_state.program_df = program_df
@@ -422,10 +475,10 @@ with tab3:
             
             for ders in dersler:
                 ders_konular = program_df[program_df['Ders'] == ders]
-                tamamlama_orani = 100 - (len(ders_konular) / len(program_df) * 100)
+                tamamlama_orani = len(ders_konular) / len(program_df) * 100
                 
                 st.progress(tamamlama_orani / 100)
-                st.text(f"{ders}: {len(ders_konular)} konu - %{tamamlama_orani:.1f} hedef")
+                st.text(f"{ders}: {len(ders_konular)} konu - %{tamamlama_orani:.1f}")
     else:
         st.warning("Önce analiz yapın!")
 
