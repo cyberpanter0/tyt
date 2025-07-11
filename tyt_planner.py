@@ -7,6 +7,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from groq import Groq
+import PyPDF2
 
 # Groq AI Client
 @st.cache_resource
