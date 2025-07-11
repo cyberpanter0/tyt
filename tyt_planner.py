@@ -463,6 +463,14 @@ with st.sidebar:
     else:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
+# Define ders_gruplari before using it
+ders_gruplari = {
+    "Temel Matematik": ["Matematik"],
+    "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
+    "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe"],
+    "Dil ve Edebiyat": ["Türkçe", "Türk Dili ve Edebiyatı"]
+}
+
 # Ana içerik
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
