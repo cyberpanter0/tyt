@@ -381,6 +381,63 @@ def excel_export_professional(program_df):
     
     return output.getvalue()
 
+# Yeni fonksiyon: Öğrenci performans özeti
+def hesapla_performans_ozeti(veriler):
+    """Öğrencinin genel performans özetini hesapla"""
+    ozet = {
+        'Toplam Soru': 0,
+        'Toplam Doğru': 0,
+        'Toplam Yanlış': 0,
+        'Toplam Boş': 0,
+        'Net': 0,
+        'Max Net': 0,
+        'Kalan Net': 0,
+        'Başarı Oranı': 0
+    }
+    
+    ders_bazli = {}
+    
+    for ders, konular in veriler.items():
+        ders_toplam = 0
+        ders_dogru = 0
+        ders_yanlis = 0
+        ders_bos = 0
+        
+        for konu, sonuclar in konular.items():
+            ders_toplam += sonuclar['gercek_soru']
+            ders_dogru += sonuclar['dogru']
+            ders_yanlis += sonuclar['yanlis']
+            ders_bos += sonuclar['bos']
+            
+            # Genel toplamlar
+            ozet['Toplam Soru'] += sonuclar['gercek_soru']
+            ozet['Toplam Doğru'] += sonuclar['dogru']
+            ozet['Toplam Yanlış'] += sonuclar['yanlis']
+            ozet['Toplam Boş'] += sonuclar['bos']
+        
+        # Ders neti (Doğru - Yanlış/4)
+        ders_net = ders_dogru - (ders_yanlis / 4)
+        ders_max_net = ders_toplam
+        
+        ders_bazli[ders] = {
+            'Toplam Soru': ders_toplam,
+            'Doğru': ders_dogru,
+            'Yanlış': ders_yanlis,
+            'Boş': ders_bos,
+            'Net': ders_net,
+            'Max Net': ders_max_net,
+            'Kalan Net': ders_max_net - ders_net,
+            'Başarı Oranı': (ders_dogru / ders_toplam * 100) if ders_toplam > 0 else 0
+        }
+    
+    # Genel net hesaplama
+    ozet['Net'] = ozet['Toplam Doğru'] - (ozet['Toplam Yanlış'] / 4)
+    ozet['Max Net'] = ozet['Toplam Soru']
+    ozet['Kalan Net'] = ozet['Max Net'] - ozet['Net']
+    ozet['Başarı Oranı'] = (ozet['Toplam Doğru'] / ozet['Toplam Soru'] * 100) if ozet['Toplam Soru'] > 0 else 0
+    
+    return ozet, ders_bazli
+
 # Streamlit arayüzü
 st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
 
@@ -408,8 +465,8 @@ with st.sidebar:
     else:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
-# Ana içerik
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
+# Ana içerik - Yeni tab ekledik
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar", "📝 Öğrenci Özeti"])
 
 with tab1:
     st.header("Deneme Sonuçlarını Girin")
@@ -573,7 +630,6 @@ with tab3:
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Önce analiz yapın!")
-        # Kaynak önerme modülü - tab4 olarak eklenecek
 
 # KITAP VERİLERİ
 KITAP_ONERILERI = {
@@ -978,6 +1034,70 @@ with tab4:
     
     else:
         st.warning("⚠️ Kaynak önerileri için önce analiz yapın!")
+
+# Yeni tab: Öğrenci Özeti
+with tab5:
+    st.header("📝 Öğrenci Genel Özeti")
+    
+    if 'veriler' in st.session_state and st.session_state.veriler:
+        # Performans özetini hesapla
+        genel_ozet, ders_bazli_ozet = hesapla_performans_ozeti(st.session_state.veriler)
+        
+        # Genel istatistikler
+        st.subheader("📊 Genel İstatistikler")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        col1.metric("Toplam Soru", genel_ozet['Toplam Soru'])
+        col2.metric("Toplam Doğru", genel_ozet['Toplam Doğru'])
+        col3.metric("Toplam Yanlış", genel_ozet['Toplam Yanlış'])
+        col4.metric("Toplam Boş", genel_ozet['Toplam Boş'])
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Net", f"{genel_ozet['Net']:.2f}")
+        col2.metric("Max Net", genel_ozet['Max Net'])
+        col3.metric("Kalan Net", f"{genel_ozet['Kalan Net']:.2f}")
+        
+        # Başarı oranı grafiği
+        st.subheader("📈 Başarı Oranı")
+        basari_orani = genel_ozet['Başarı Oranı']
+        st.progress(basari_orani / 100)
+        st.markdown(f"**{basari_orani:.2f}%** Başarı Oranı")
+        
+        # Ders bazlı performans
+        st.subheader("📚 Ders Bazlı Performans")
+        ders_performans = []
+        for ders, bilgi in ders_bazli_ozet.items():
+            ders_performans.append({
+                'Ders': ders,
+                'Net': bilgi['Net'],
+                'Max Net': bilgi['Max Net'],
+                'Kalan Net': bilgi['Kalan Net'],
+                'Başarı Oranı': bilgi['Başarı Oranı']
+            })
+        
+        ders_df = pd.DataFrame(ders_performans)
+        
+        # Net karşılaştırma grafiği
+        fig = px.bar(ders_df, 
+                    x='Ders', 
+                    y=['Net', 'Kalan Net'],
+                    title='Derslere Göre Net Durumu',
+                    labels={'value': 'Net', 'variable': 'Durum'},
+                    barmode='group')
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Detaylı tablo
+        st.subheader("🔍 Detaylı Performans Tablosu")
+        st.dataframe(ders_df, use_container_width=True)
+        
+        # İyileştirme alanları
+        st.subheader("🎯 İyileştirme Alanları")
+        en_cok_kalan = ders_df.sort_values('Kalan Net', ascending=False).head(3)
+        for i, row in en_cok_kalan.iterrows():
+            st.error(f"{row['Ders']}: {row['Kalan Net']:.2f} net kazanma potansiyeli")
+        
+    else:
+        st.warning("⚠️ Önce veri girişi yapın!")
 
 # Export butonu
 if 'program_df' in st.session_state:
