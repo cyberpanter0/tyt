@@ -463,6 +463,14 @@ with st.sidebar:
     else:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
+# Define ders_gruplari before using it
+ders_gruplari = {
+    "Temel Matematik": ["Matematik"],
+    "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
+    "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe"],
+    "Dil ve Edebiyat": ["Türkçe", "Türk Dili ve Edebiyatı"]
+}
+
 # Ana içerik
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
@@ -502,6 +510,10 @@ with tab1:
                     else:
                         st.error("PDF analiz edilemedi. Lütfen manuel giriş yapın.")
 
+    # Session state'i başlat
+    if 'veriler' not in st.session_state:
+        st.session_state.veriler = {}
+    
     for grup_adi, dersler in ders_gruplari.items():
         with st.expander(f"📚 {grup_adi}", expanded=False):
             for ders in dersler:
