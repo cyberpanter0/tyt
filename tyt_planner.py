@@ -4,10 +4,8 @@ import plotly.express as px
 from datetime import datetime, timedelta
 import json
 import io
-import os
-from fpdf2 import FPDF
 
-# Groq AI Client - Hata kontrolü ile
+# Groq AI Client
 @st.cache_resource
 def init_groq_client():
     try:
@@ -100,18 +98,23 @@ KONU_VERILERI = {
     }
 }
 
+# Zorluk katsayıları
+ZORLUK_KATSAYILARI = {
+    "Kolay": 0.5,
+    "Orta": 1,
+    "Zor": 2
+}
+
 def get_ai_suggestion(konu_analizi):
-    """Groq AI'dan çalışma önerisi al - Optimize edilmiş prompt"""
+    """Groq AI'dan çalışma önerisi al"""
     if not client:
         return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
     
     try:
-        # En düşük puanlı (en iyi) 3 konu ve en yüksek puanlı (en kötü) 5 konu
-        sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'])
-        iyi_konular = sorted_topics[:3]
-        kotu_konular = sorted_topics[-5:]
+        sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'], reverse=True)
+        kotu_konular = sorted_topics[:5]
+        iyi_konular = sorted_topics[-3:]
         
-        # Ders bazında analiz
         ders_analizi = {}
         for konu, info in konu_analizi.items():
             ders = info['ders']
@@ -120,7 +123,6 @@ def get_ai_suggestion(konu_analizi):
             ders_analizi[ders]['toplam_puan'] += info['oncelik_puani']
             ders_analizi[ders]['konu_sayisi'] += 1
         
-        # Ortalama puanları hesapla
         for ders in ders_analizi:
             ders_analizi[ders]['ortalama'] = ders_analizi[ders]['toplam_puan'] / ders_analizi[ders]['konu_sayisi']
         
@@ -137,22 +139,12 @@ def get_ai_suggestion(konu_analizi):
         
         📊 EN PROBLEMLI DERS: {en_kotu_ders[0]} (Ortalama: {en_kotu_ders[1]['ortalama']:.1f})
         
-        Aşağıdaki kriterlere göre KISA ve ÖZGÜN bir çalışma stratejisi öner:
-        1. Hangi konulara ne kadar süre ayırmalı?
-        2. Hangi sırayla çalışmalı?
-        3. Hangi çalışma teknikleri kullanmalı?
-        4. Motivasyon artırıcı öneriler
-        
-        Maksimum 200 kelime, samimi ve motive edici bir dille yaz.
+        Kısa ve özgün bir çalışma stratejisi öner. Maksimum 200 kelime.
         """
         
         chat_completion = client.chat.completions.create(
             messages=[
-                {
-                    "role": "system", 
-                    "content": """Sen uzman bir TYT koçusun. Öğrencilere kişiselleştirilmiş, pratik ve motive edici çalışma stratejileri veriyorsun. 
-                    Önerilerini somut, uygulanabilir ve pozitif bir dille sun. Sadece genel laflar değil, spesifik eylem planları ver."""
-                },
+                {"role": "system", "content": "Sen uzman bir TYT koçusun. Öğrencilere kişiselleştirilmiş, pratik ve motive edici çalışma stratejileri veriyorsun."},
                 {"role": "user", "content": prompt}
             ],
             model="llama3-70b-8192",
@@ -164,9 +156,21 @@ def get_ai_suggestion(konu_analizi):
     except Exception as e:
         return f"AI önerisi alınırken hata oluştu: {str(e)}"
 
-def hesapla_oncelik_puani(dogru, yanlis, bos):
-    """Öncelik puanını hesapla"""
-    return (yanlis * 1.5) + (bos * 1.2) - (dogru * 0.5)
+def hesapla_oncelik_puani(dogru, yanlis, bos, zorluk, ortalama_soru):
+    """Geliştirilmiş öncelik puanı hesapla"""
+    zorluk_katsayisi = ZORLUK_KATSAYILARI[zorluk]
+    
+    # Temel puan
+    puan = (yanlis * 2) + (bos * 1.5) + (zorluk_katsayisi * 3)
+    
+    # Konu önem ağırlığı
+    toplam_ortalama_soru = sum(sum(konu['ortalama_soru'] for konu in ders.values()) for ders in KONU_VERILERI.values())
+    onem_agirligi = (ortalama_soru / toplam_ortalama_soru) * 10
+    
+    # Final puan
+    oncelik_puani = puan * onem_agirligi
+    
+    return oncelik_puani
 
 def analiz_et(veriler):
     """Tüm verileri analiz et"""
@@ -174,11 +178,16 @@ def analiz_et(veriler):
     for ders, konular in veriler.items():
         for konu, sonuclar in konular.items():
             if sonuclar['dogru'] + sonuclar['yanlis'] + sonuclar['bos'] > 0:
+                konu_bilgi = KONU_VERILERI[ders][konu]
+                
                 oncelik_puani = hesapla_oncelik_puani(
                     sonuclar['dogru'], 
                     sonuclar['yanlis'], 
-                    sonuclar['bos']
+                    sonuclar['bos'],
+                    konu_bilgi['zorluk'],
+                    konu_bilgi['ortalama_soru']
                 )
+                
                 analiz[f"{ders} - {konu}"] = {
                     'ders': ders,
                     'konu': konu,
@@ -186,7 +195,8 @@ def analiz_et(veriler):
                     'dogru': sonuclar['dogru'],
                     'yanlis': sonuclar['yanlis'],
                     'bos': sonuclar['bos'],
-                    'zorluk': KONU_VERILERI[ders][konu]['zorluk']
+                    'zorluk': konu_bilgi['zorluk'],
+                    'gercek_soru': sonuclar['gercek_soru']
                 }
     return analiz
 
@@ -210,7 +220,8 @@ def program_olustur(analiz, baslangic_tarihi, gun_sayisi):
             'Zorluk': bilgi['zorluk'],
             'Doğru': bilgi['dogru'],
             'Yanlış': bilgi['yanlis'],
-            'Boş': bilgi['bos']
+            'Boş': bilgi['bos'],
+            'Gerçek Soru': bilgi['gercek_soru']
         })
     
     return program
@@ -220,97 +231,24 @@ def excel_export(program_df):
     output = io.BytesIO()
     
     try:
-        # xlsxwriter kullanmaya çalış
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
             
             workbook = writer.book
             worksheet = writer.sheets['Çalışma Programı']
             
-            # Sütun genişliklerini ayarla
-            worksheet.set_column('A:A', 12)  # Tarih
-            worksheet.set_column('B:B', 8)   # Gün
-            worksheet.set_column('C:C', 15)  # Ders
-            worksheet.set_column('D:D', 30)  # Konu
-            worksheet.set_column('E:E', 15)  # Öncelik Puanı
-            worksheet.set_column('F:F', 10)  # Zorluk
-            worksheet.set_column('G:I', 8)   # Doğru, Yanlış, Boş
+            worksheet.set_column('A:A', 12)
+            worksheet.set_column('B:B', 8)
+            worksheet.set_column('C:C', 15)
+            worksheet.set_column('D:D', 30)
+            worksheet.set_column('E:E', 15)
+            worksheet.set_column('F:F', 10)
+            worksheet.set_column('G:J', 8)
     except ImportError:
-        # xlsxwriter yoksa openpyxl kullan
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
     
     return output.getvalue()
-
-def simple_pdf_export(program_df):
-    """Basit PDF raporu oluştur - Düzeltilmiş"""
-    try:
-        class SimplePDF(FPDF):
-            def header(self):
-                self.set_font('Arial', 'B', 16)
-                self.cell(0, 10, 'TYT Calisma Programi', align='C')
-                self.ln(10)
-            
-            def footer(self):
-                self.set_y(-15)
-                self.set_font('Arial', 'I', 8)
-                self.cell(0, 10, f'Sayfa {self.page_no()}', align='C')
-        
-        pdf = SimplePDF()
-        pdf.add_page()
-        pdf.set_font('Arial', '', 10)
-        
-        # Rapor tarihi
-        pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}')
-        pdf.ln(10)
-        
-        # Başlık
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 10, 'CALISMA PROGRAMI')
-        pdf.ln(10)
-        
-        # Tablo başlıkları
-        pdf.set_font('Arial', 'B', 8)
-        pdf.cell(25, 8, 'Tarih', 1)
-        pdf.cell(20, 8, 'Ders', 1)
-        pdf.cell(60, 8, 'Konu', 1)
-        pdf.cell(20, 8, 'Oncelik', 1)
-        pdf.cell(15, 8, 'Zorluk', 1)
-        pdf.cell(10, 8, 'D', 1)
-        pdf.cell(10, 8, 'Y', 1)
-        pdf.cell(10, 8, 'B', 1)
-        pdf.ln()
-        
-        # Veri satırları
-        pdf.set_font('Arial', '', 7)
-        for _, row in program_df.iterrows():
-            # Unicode karakterleri ASCII'ye çevir
-            ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-            konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u').replace('–', '-')
-            zorluk = str(row['Zorluk']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-            
-            # Konu adını kısalt
-            if len(konu) > 35:
-                konu = konu[:32] + "..."
-            
-            pdf.cell(25, 6, str(row['Tarih']), 1)
-            pdf.cell(20, 6, ders, 1)
-            pdf.cell(60, 6, konu, 1)
-            pdf.cell(20, 6, f"{row['Öncelik Puanı']:.1f}", 1)
-            pdf.cell(15, 6, zorluk, 1)
-            pdf.cell(10, 6, str(row['Doğru']), 1)
-            pdf.cell(10, 6, str(row['Yanlış']), 1)
-            pdf.cell(10, 6, str(row['Boş']), 1)
-            pdf.ln()
-        
-        return pdf.output()
-    except Exception as e:
-        st.error(f"PDF oluşturma hatası: {str(e)}")
-        return None
-
-def otomatik_hesapla_bos(dogru, yanlis, toplam_soru):
-    """Doğru ve yanlış girildikten sonra boş soruları otomatik hesapla"""
-    return max(0, toplam_soru - dogru - yanlis)
 
 # Streamlit arayüzü
 st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
@@ -339,11 +277,9 @@ tab1, tab2, tab3 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program"])
 with tab1:
     st.header("Deneme Sonuçlarını Girin")
     
-    # Veri depolama
     if 'veriler' not in st.session_state:
         st.session_state.veriler = {}
     
-    # Ders grupları
     ders_gruplari = {
         "Türkçe": ["Türkçe"],
         "Matematik": ["Matematik", "Geometri"],
@@ -359,52 +295,69 @@ with tab1:
                 if ders not in st.session_state.veriler:
                     st.session_state.veriler[ders] = {}
                 
-                cols = st.columns(4)
+                cols = st.columns(3)
                 for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
-                    col_idx = i % 4
+                    col_idx = i % 3
                     
                     with cols[col_idx]:
                         st.markdown(f"**{konu}**")
                         st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
                         
                         if konu not in st.session_state.veriler[ders]:
-                            st.session_state.veriler[ders][konu] = {'dogru': 0, 'yanlis': 0, 'bos': 0}
+                            st.session_state.veriler[ders][konu] = {
+                                'dogru': 0, 'yanlis': 0, 'bos': 0, 'gercek_soru': bilgi['ortalama_soru']
+                            }
                         
-                        toplam_soru = bilgi['ortalama_soru']
+                        # Gerçek soru sayısı
+                        gercek_soru = st.number_input(
+                            f"Denemede Bu Konudan Kaç Soru Vardı?",
+                            min_value=0,
+                            max_value=50,
+                            key=f"{ders}_{konu}_gercek",
+                            value=st.session_state.veriler[ders][konu]['gercek_soru']
+                        )
                         
-                        dogru = st.number_input(f"Doğru", 
-                                              min_value=0, 
-                                              max_value=toplam_soru,
-                                              key=f"{ders}_{konu}_dogru", 
-                                              value=st.session_state.veriler[ders][konu]['dogru'])
+                        # Doğru
+                        dogru = st.number_input(
+                            f"Doğru", 
+                            min_value=0, 
+                            max_value=gercek_soru,
+                            key=f"{ders}_{konu}_dogru", 
+                            value=st.session_state.veriler[ders][konu]['dogru']
+                        )
                         
-                        yanlis = st.number_input(f"Yanlış", 
-                                               min_value=0, 
-                                               max_value=max(0, toplam_soru - dogru),
-                                               key=f"{ders}_{konu}_yanlis",
-                                               value=st.session_state.veriler[ders][konu]['yanlis'])
+                        # Yanlış
+                        yanlis = st.number_input(
+                            f"Yanlış", 
+                            min_value=0, 
+                            max_value=max(0, gercek_soru - dogru),
+                            key=f"{ders}_{konu}_yanlis",
+                            value=st.session_state.veriler[ders][konu]['yanlis']
+                        )
                         
-                        # Boş soruları otomatik hesapla
-                        bos = otomatik_hesapla_bos(dogru, yanlis, toplam_soru)
+                        # Boş otomatik hesapla
+                        bos = max(0, gercek_soru - dogru - yanlis)
                         
-                        # Boş soruları göster (sadece görüntü için)
-                        st.text_input(f"Boş", 
-                                    value=str(bos),
-                                    key=f"{ders}_{konu}_bos_display",
-                                    disabled=True)
+                        st.text_input(
+                            f"Boş (Otomatik)", 
+                            value=str(bos),
+                            key=f"{ders}_{konu}_bos_display",
+                            disabled=True
+                        )
                         
                         st.session_state.veriler[ders][konu] = {
                             'dogru': dogru,
                             'yanlis': yanlis,
-                            'bos': bos
+                            'bos': bos,
+                            'gercek_soru': gercek_soru
                         }
                         
-                        # Toplam kontrol
+                        # Kontrol
                         toplam = dogru + yanlis + bos
-                        if toplam == toplam_soru:
+                        if toplam == gercek_soru:
                             st.success(f"✅ Toplam: {toplam}")
                         else:
-                            st.error(f"❌ Toplam: {toplam}/{toplam_soru}")
+                            st.error(f"❌ Toplam: {toplam}/{gercek_soru}")
 
 with tab2:
     st.header("📊 Analiz Sonuçları")
@@ -414,7 +367,6 @@ with tab2:
         st.session_state.analiz_sonucu = analiz_sonucu
         
         if analiz_sonucu:
-            # Öncelik sıralaması
             sorted_analiz = sorted(analiz_sonucu.items(), key=lambda x: x[1]['oncelik_puani'], reverse=True)
             
             col1, col2 = st.columns(2)
@@ -429,7 +381,6 @@ with tab2:
                 for i, (konu, bilgi) in enumerate(sorted_analiz[-10:]):
                     st.success(f"{i+1}. {konu} (Puan: {bilgi['oncelik_puani']:.1f})")
             
-            # Grafik
             df_analiz = pd.DataFrame([
                 {
                     'Konu': konu,
@@ -469,7 +420,6 @@ with tab3:
             
             st.dataframe(program_df, use_container_width=True)
             
-            # İlerleme takibi
             st.subheader("📊 İlerleme Takibi")
             dersler = program_df['Ders'].unique()
             
@@ -482,42 +432,22 @@ with tab3:
     else:
         st.warning("Önce analiz yapın!")
 
-# Export butonları
+# Export butonu
 if 'program_df' in st.session_state:
     st.markdown("---")
     st.subheader("📁 Dışa Aktarma")
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("📊 Excel'e Aktar"):
-            try:
-                excel_data = excel_export(st.session_state.program_df)
-                st.download_button(
-                    label="Excel Dosyasını İndir",
-                    data=excel_data,
-                    file_name=f"tyt_program_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            except Exception as e:
-                st.error(f"Excel export hatası: {str(e)}")
-    
-    with col2:
-        if st.button("📄 PDF'e Aktar"):
-            try:
-                pdf_data = simple_pdf_export(st.session_state.program_df)
-                if pdf_data:
-                    st.download_button(
-                        label="PDF Dosyasını İndir",
-                        data=pdf_data,
-                        file_name=f"tyt_rapor_{datetime.now().strftime('%Y%m%d')}.pdf",
-                        mime="application/pdf"
-                    )
-                else:
-                    st.error("PDF export için fpdf2 kütüphanesi gerekli.")
-            except Exception as e:
-                st.error(f"PDF export hatası: {str(e)}")
+    if st.button("📊 Excel'e Aktar"):
+        try:
+            excel_data = excel_export(st.session_state.program_df)
+            st.download_button(
+                label="Excel Dosyasını İndir",
+                data=excel_data,
+                file_name=f"tyt_program_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        except Exception as e:
+            st.error(f"Excel export hatası: {str(e)}")
 
-# Footer
 st.markdown("---")
 st.markdown("💡 **İpucu:** Düzenli olarak deneme sonuçlarınızı güncelleyin ve programınızı yenileyin!")
