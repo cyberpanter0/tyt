@@ -113,8 +113,9 @@ ZORLUK_KATSAYILARI = {
     "Zor": 2
 }
 
+# Geliştirilmiş AI Öneri Sistemi
 def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
-    """Geliştirilmiş AI önerisi"""
+    """Geliştirilmiş ve daha detaylı AI önerisi"""
     if not client:
         return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
     
@@ -146,7 +147,7 @@ def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
         kritik_konu_sayisi = len([k for k, v in konu_analizi.items() if v['oncelik_puani'] > 5])
         
         prompt = f"""
-        Sen TYT'de uzman bir eğitim koçusun. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş 30 günlük strateji hazırlayacaksın.
+        Sen TYT'de uzman bir eğitim koçusun. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş {gun_sayisi} günlük strateji hazırlayacaksın.
 
         📊 ÖĞRENCİ PROFİLİ:
         • Toplam çalışma süresi: {toplam_saat} saat ({gun_sayisi} gün x {gunluk_saat} saat)
@@ -165,32 +166,93 @@ def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
         📈 DERS BAZLI ZAYIFLIK ANALİZİ:
         {chr(10).join([f"• {ders}: %{data['zayiflik_orani']*100:.0f} zayıf konu oranı" for ders, data in ders_analizi.items()])}
         
-        GÖREV: Aşağıdaki kriterlere göre 4 haftalık strateji hazırla:
-        1. İlk 2 hafta: Kritik konulara %70 odaklanma
-        2. 3. hafta: Orta düzey konuları güçlendirme
-        3. 4. hafta: Genel tekrar + güçlü alanları pekiştirme
-        4. Haftalık hedefler ve motivasyon önerileri
-        5. Hangi zaman dilimlerinde hangi konu türlerini çalışmalı
+        GÖREV: Aşağıdaki kriterlere göre {gun_sayisi} günlük DETAYLI strateji hazırla (en az 800 kelime):
+        1. Kritik konular için haftalık çalışma planı (konu bazlı)
+        2. Her kritik konu için özel çalışma teknikleri
+        3. Zaman yönetimi stratejileri
+        4. Kaynak önerileri (kitap, video, uygulama)
+        5. Motivasyon teknikleri ve başarı hikayeleri
+        6. Deneme sınavı takvimi
+        7. Ölçme-değerlendirme yöntemleri
+        8. Uyku ve beslenme düzeni önerileri
+        9. Stres yönetimi teknikleri
+        10. Son hafta için özel taktikler
         
-        Maksimum 300 kelime, pratik ve uygulanabilir öneriler ver.
+        Çıktıyı başlıklar halinde düzenle ve her bölüm için en az 3-5 madde içeren detaylı açıklamalar yap.
         """
         
         chat_completion = client.chat.completions.create(
             messages=[
                 {
                     "role": "system", 
-                    "content": "Sen TYT'de uzman, analitik düşünen ve öğrenci psikolojisini iyi bilen bir eğitim koçusun. Veriye dayalı, kişiselleştirilmiş ve motive edici stratejiler sunuyorsun."
+                    "content": "Sen TYT'de uzman, analitik düşünen ve öğrenci psikolojisini iyi bilen bir eğitim koçusun. Veriye dayalı, kişiselleştirilmiş ve motive edici stratejiler sunuyorsun. Önerilerin en az 800 kelime olmalı ve tüm detayları kapsamalı."
                 },
                 {"role": "user", "content": prompt}
             ],
             model="llama3-70b-8192",
-            max_tokens=400,
+            max_tokens=4000,
             temperature=0.7
         )
         
         return chat_completion.choices[0].message.content
     except Exception as e:
         return f"AI önerisi alınırken hata oluştu: {str(e)}"
+
+# PDF Karneden Veri Çıkarma Fonksiyonu
+def extract_data_from_pdf(pdf_file):
+    """PDF karnesinden veri çıkar"""
+    try:
+        # PDF'den metin çıkar
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+        
+        # AI ile metni analiz et ve verileri çıkar
+        prompt = f"""
+        Aşağıda bir TYT deneme sınavı karnesinden çıkarılmış metin bulunmaktadır. 
+        Bu metinden dersler ve konular bazında doğru, yanlış ve boş sayılarını çıkar.
+        
+        Çıktı formatı JSON olmalı ve aşağıdaki yapıda olmalı:
+        {{
+          "Türkçe": {{
+            "Paragraf": {{"dogru": sayı, "yanlis": sayı, "bos": sayı, "gercek_soru": sayı}},
+            "Cümlede Anlam": {{...}},
+            ...
+          }},
+          "Matematik": {{...}},
+          ...
+        }}
+        
+        Dersler: Türkçe, Matematik, Geometri, Fizik, Kimya, Biyoloji, Tarih, Coğrafya, Felsefe, Din Kültürü
+        Konular: Sistemde tanımlı olan konu isimlerini kullan
+        
+        METİN:
+        {text[:10000]}  # İlk 10,000 karakteri al
+        
+        Sadece JSON formatında cevap ver, başka hiçbir şey yazma.
+        """
+        
+        response = client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=[
+                {"role": "system", "content": "Sadece istenen JSON formatında çıktı ver."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            max_tokens=4000
+        )
+        
+        json_str = response.choices[0].message.content
+        
+        # JSON'u temizle
+        json_str = json_str.replace("```json", "").replace("```", "").strip()
+        data = json.loads(json_str)
+        
+        return data
+    except Exception as e:
+        st.error(f"PDF analiz hatası: {str(e)}")
+        return None
 
 def hesapla_oncelik_puani(dogru, yanlis, bos, zorluk, ortalama_soru):
     """Geliştirilmiş öncelik puanı hesapla"""
@@ -375,10 +437,10 @@ def excel_export_professional(program_df):
     return output.getvalue()
 
 # Streamlit arayüzü
-st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
-
-st.title("🎯 TYT Hazırlık Uygulaması")
-st.markdown("---")
+def main():
+    st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
+    st.title("🎯 TYT Hazırlık Uygulaması")
+    st.markdown("---")
 
 # Sidebar - AI Koç
 with st.sidebar:
@@ -404,18 +466,41 @@ with st.sidebar:
 # Ana içerik
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
-with tab1:
-    st.header("Deneme Sonuçlarını Girin")
-    
-    if 'veriler' not in st.session_state:
-        st.session_state.veriler = {}
-    
-    ders_gruplari = {
-        "Türkçe": ["Türkçe"],
-        "Matematik": ["Matematik", "Geometri"],
-        "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
-        "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe", "Din Kültürü"]
-    }
+ with tab1:
+        st.header("Deneme Sonuçlarını Girin")
+        
+        # PDF'den Veri Çekme Bölümü
+        with st.expander("📄 PDF Karneden Otomatik Veri Çek", expanded=False):
+            uploaded_file = st.file_uploader("Deneme Sonuç Karnesi (PDF) Yükle", type="pdf")
+            
+            if uploaded_file is not None:
+                if st.button("PDF'den Verileri Çek ve Uygula"):
+                    with st.spinner("PDF analiz ediliyor..."):
+                        pdf_data = extract_data_from_pdf(uploaded_file)
+                        
+                        if pdf_data:
+                            # Mevcut verilerle birleştir
+                            if 'veriler' not in st.session_state:
+                                st.session_state.veriler = {}
+                            
+                            for ders, konular in pdf_data.items():
+                                if ders not in st.session_state.veriler:
+                                    st.session_state.veriler[ders] = {}
+                                
+                                for konu, sonuclar in konular.items():
+                                    # Sadece geçerli konuları işle
+                                    if konu in KONU_VERILERI.get(ders, {}):
+                                        st.session_state.veriler[ders][konu] = {
+                                            'dogru': sonuclar.get('dogru', 0),
+                                            'yanlis': sonuclar.get('yanlis', 0),
+                                            'bos': sonuclar.get('bos', 0),
+                                            'gercek_soru': sonuclar.get('gercek_soru', KONU_VERILERI[ders][konu]['ortalama_soru'])
+                                        }
+                            
+                            st.success("PDF'den veriler başarıyla çekildi ve uygulandı!")
+                            st.json(pdf_data)
+                        else:
+                            st.error("PDF analiz edilemedi. Lütfen manuel giriş yapın.")
     
     for grup_adi, dersler in ders_gruplari.items():
         with st.expander(f"📚 {grup_adi}", expanded=False):
