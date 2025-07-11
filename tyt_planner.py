@@ -114,13 +114,14 @@ ZORLUK_KATSAYILARI = {
 }
 
 def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
-    """Detaylı ve kapsamlı AI önerisi"""
+    """Geliştirilmiş AI önerisi"""
     if not client:
         return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
     
     try:
         sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'], reverse=True)
         kotu_konular = sorted_topics[:8]
+        orta_konular = sorted_topics[8:16] if len(sorted_topics) > 8 else []
         iyi_konular = sorted_topics[-5:]
         
         # Ders bazında analiz
@@ -139,161 +140,57 @@ def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
             ders_analizi[ders]['zayiflik_orani'] = ders_analizi[ders]['zayif_konular'] / ders_analizi[ders]['konu_sayisi']
         
         en_zayif_ders = max(ders_analizi.items(), key=lambda x: x[1]['ortalama'])
-        en_iyi_ders = min(ders_analizi.items(), key=lambda x: x[1]['ortalama'])
         
         # Hedef belirleme
         toplam_saat = gunluk_saat * gun_sayisi
         kritik_konu_sayisi = len([k for k, v in konu_analizi.items() if v['oncelik_puani'] > 5])
         
         prompt = f"""
-        Sen TYT'de uzman bir eğitim koçusun. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş {gun_sayisi} günlük strateji hazırlayacaksın.
+        Sen TYT'de uzman bir eğitim koçusun. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş 30 günlük strateji hazırlayacaksın.
 
         📊 ÖĞRENCİ PROFİLİ:
         • Toplam çalışma süresi: {toplam_saat} saat ({gun_sayisi} gün x {gunluk_saat} saat)
         • Kritik durumdaki konu sayısı: {kritik_konu_sayisi}
         • En zayıf alan: {en_zayif_ders[0]} (Risk skoru: {en_zayif_ders[1]['ortalama']:.1f})
-        • En güçlü alan: {en_iyi_ders[0]} (Güç skoru: {10 - en_iyi_ders[1]['ortalama']:.1f})
         
-        🔴 ACİL MÜDAHALE GEREKTİREN KONULAR (En yüksek riskli 8 konu):
+        🔴 ACİL MÜDAHALE GEREKTİREN KONULAR:
         {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Risk: {info['oncelik_puani']:.1f}/10" for konu, info in kotu_konular])}
         
-        🟢 GÜÇLÜ ALANLAR (En düşük riskli 5 konu):
+        🟡 GELİŞTİRİLMESİ GEREKEN KONULAR:
+        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Risk: {info['oncelik_puani']:.1f}/10" for konu, info in orta_konular])}
+        
+        🟢 GÜÇLÜ ALANLAR (Koruma altında):
         {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Risk: {info['oncelik_puani']:.1f}/10" for konu, info in iyi_konular])}
         
-        📈 DERS BAZLI ANALİZ:
-        {chr(10).join([f"• {ders}: %{data['zayiflik_orani']*100:.0f} zayıf konu oranı (Ortalama risk: {data['ortalama']:.1f})" for ders, data in ders_analizi.items()])}
+        📈 DERS BAZLI ZAYIFLIK ANALİZİ:
+        {chr(10).join([f"• {ders}: %{data['zayiflik_orani']*100:.0f} zayıf konu oranı" for ders, data in ders_analizi.items()])}
         
-        GÖREV: Aşağıdaki kriterlere göre {gun_sayisi} günlük DETAYLI strateji hazırla:
-        1. Haftalık plan: {gun_sayisi} günü 4 haftaya bölerek haftalık hedefler belirle
-        2. Kritik konular: İlk 2 hafta kritik konulara %70 odaklanma - her konu için özel çalışma taktikleri
-        3. Güçlendirme: 3. hafta orta düzey konuları güçlendirme - kaynak önerileri ve soru çözüm teknikleri
-        4. Genel tekrar: Son hafta genel tekrar + güçlü alanları pekiştirme - deneme sınavı stratejileri
-        5. Zaman yönetimi: Hangi zaman dilimlerinde hangi konu türlerini çalışmalı (biyolojik saat uyumlu)
-        6. Motivasyon: Haftalık motivasyonel hedefler ve başarı ölçütleri
-        7. Kaynak önerileri: Zayıf olduğu konular için özel kitap ve video önerileri
-        8. Uyarılar: Yapılan yaygın hatalar ve bunlardan kaçınma yolları
+        GÖREV: Aşağıdaki kriterlere göre 4 haftalık strateji hazırla:
+        1. İlk 2 hafta: Kritik konulara %70 odaklanma
+        2. 3. hafta: Orta düzey konuları güçlendirme
+        3. 4. hafta: Genel tekrar + güçlü alanları pekiştirme
+        4. Haftalık hedefler ve motivasyon önerileri
+        5. Hangi zaman dilimlerinde hangi konu türlerini çalışmalı
         
-        ÇIKTI FORMATI:
-        ✨ 4 HAFTALIK STRATEJİ ✨
-        [Hafta 1-4 için detaylı plan]
-        🔍 KONU BAZLI TAKTİKLER:
-        [Her kritik konu için özel taktikler]
-        📚 KAYNAK ÖNERİLERİ:
-        [Ders bazlı kitap ve video önerileri]
-        💪 MOTİVASYON:
-        [Kişiye özel motivasyonel mesaj]
-        
-        Lütfen en az 800 kelime olacak şekilde detaylı, pratik ve uygulanabilir öneriler ver.
+        Maksimum 300 kelime, pratik ve uygulanabilir öneriler ver.
         """
         
         chat_completion = client.chat.completions.create(
             messages=[
                 {
                     "role": "system", 
-                    "content": "Sen Türkiye'nin en iyi TYT koçusun. Analitik düşünür, veriye dayalı stratejiler üretirsin. Öğrenci psikolojisini çok iyi bilir, motive edici ve gerçekçi tavsiyeler verirsin. Tüm cevaplarını detaylı, pratik ve uygulanabilir olmalı."
+                    "content": "Sen TYT'de uzman, analitik düşünen ve öğrenci psikolojisini iyi bilen bir eğitim koçusun. Veriye dayalı, kişiselleştirilmiş ve motive edici stratejiler sunuyorsun."
                 },
                 {"role": "user", "content": prompt}
             ],
             model="llama3-70b-8192",
-            max_tokens=3000,
+            max_tokens=400,
             temperature=0.7
         )
         
         return chat_completion.choices[0].message.content
     except Exception as e:
         return f"AI önerisi alınırken hata oluştu: {str(e)}"
-
-# PDF Karnesi Analiz Fonksiyonu
-def analiz_pdf_karnesi(uploaded_file):
-    """PDF karnesinden veri çıkar"""
-    if not client:
-        return "PDF analizi için AI hizmeti kullanılamıyor"
-    
-    try:
-        # PDF'yi base64'e çevir (gerçek uygulamada dosyayı sunucuya yüklemek gerekir)
-        # Bu örnekte PDF içeriğini metin olarak analiz ediyoruz
-        pdf_text = ""
-        if uploaded_file.type == "application/pdf":
-            pdf_text = "PDF içeriği analiz ediliyor..."  # Gerçekte PyPDF2 veya benzeri kütüphane kullanılır
-        
-        prompt = f"""
-        Aşağıda bir TYT deneme sınavı karnesinin metin çıktısı bulunmaktadır. 
-        Görevin: Bu karnedeki verileri aşağıdaki JSON formatında çıkar:
-        
-        {{
-          "turkce": {{
-            "Paragraf": {{"dogru": 0, "yanlis": 0, "bos": 0}},
-            "Cümlede Anlam": {{"dogru": 0, "yanlis": 0, "bos": 0}},
-            ...
-          }},
-          "matematik": {{
-            "Temel Kavramlar": {{"dogru": 0, "yanlis": 0, "bos": 0}},
-            ...
-          }},
-          ...
-        }}
-        
-        PDF METNİ:
-        {pdf_text[:3000]}  # İlk 3000 karakteri al
-        
-        KURALLAR:
-        1. Sadece JSON formatında cevap ver
-        2. Tüm dersleri ve konuları KONU_VERILERI yapısına göre çıkar
-        3. Eksik konular için varsayılan 0 değer kullan
-        4. Hiçbir açıklama ekleme
-        """
-        
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system", 
-                    "content": "Sen bir veri çıkarım uzmanısın. PDF karnelerindeki verileri JSON formatında çıkarıyorsun."
-                },
-                {"role": "user", "content": prompt}
-            ],
-            model="llama3-70b-8192",
-            response_format={"type": "json_object"},
-            temperature=0.1
-        )
-        
-        return json.loads(chat_completion.choices[0].message.content)
-    except Exception as e:
-        return {"error": f"PDF analiz hatası: {str(e)}"}
-
-# Yeni PDF Analiz Sekmesi
-    with tab4:
-    st.header("📊 PDF Karnesi Analizi")
-    st.info("Deneme sınavı PDF karnenizi yükleyin, otomatik olarak verileriniz analiz edilsin!")
-    
-    uploaded_file = st.file_uploader("PDF Karnesi Yükle", type=["pdf"])
-    
-    if uploaded_file is not None:
-        with st.spinner("PDF karneniz analiz ediliyor..."):
-            pdf_verileri = analiz_pdf_karnesi(uploaded_file)
-            
-            if "error" in pdf_verileri:
-                st.error(pdf_verileri["error"])
-            else:
-                st.success("PDF karnesi başarıyla analiz edildi!")
-                
-                # PDF'den çıkarılan verileri göster
-                with st.expander("Analiz Sonuçları", expanded=True):
-                    st.json(pdf_verileri)
-                
-                # Verileri ana forma aktar
-                if st.button("Verileri Ana Forma Aktar"):
-                    for ders, konular in pdf_verileri.items():
-                        ders_adi = ders.capitalize()
-                        if ders_adi in st.session_state.veriler:
-                            for konu, sonuclar in konular.items():
-                                if konu in st.session_state.veriler[ders_adi]:
-                                    st.session_state.veriler[ders_adi][konu] = {
-                                        'dogru': sonuclar.get('dogru', 0),
-                                        'yanlis': sonuclar.get('yanlis', 0),
-                                        'bos': sonuclar.get('bos', 0),
-                                        'gercek_soru': st.session_state.veriler[ders_adi][konu]['gercek_soru']
-                                    }
-                    st.success("Veriler ana forma aktarıldı! Analiz sekmesinden kontrol edebilirsiniz.")
 
 def hesapla_oncelik_puani(dogru, yanlis, bos, zorluk, ortalama_soru):
     """Geliştirilmiş öncelik puanı hesapla"""
