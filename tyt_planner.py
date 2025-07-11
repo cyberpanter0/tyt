@@ -3,11 +3,13 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
 import io
+import json  # Bu satırı ekleyin
+import PyPDF2
+import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from groq import Groq
-import PyPDF2
 
 # Groq AI Client
 @st.cache_resource
