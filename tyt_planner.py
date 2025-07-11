@@ -2,19 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
-import json
 import io
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+from openpyxl.utils.dataframe import dataframe_to_rows
+from groq import Groq
 
 # Groq AI Client
 @st.cache_resource
 def init_groq_client():
     try:
-        from groq import Groq
         api_key = st.secrets.get("GROQ_API_KEY", "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")
         return Groq(api_key=api_key)
-    except ImportError:
-        st.error("Groq kütüphanesi yüklenemedi. AI özellikler devre dışı.")
-        return None
     except Exception as e:
         st.error(f"Groq client başlatılamadı: {str(e)}")
         return None
@@ -24,78 +23,87 @@ client = init_groq_client()
 # Konu verileri
 KONU_VERILERI = {
     "Türkçe": {
-        "Paragraf": {"zorluk": "Zor", "ortalama_soru": 23},
-        "Cümlede Anlam": {"zorluk": "Orta", "ortalama_soru": 3},
-        "Sözcükte Anlam": {"zorluk": "Kolay", "ortalama_soru": 2},
-        "Anlatım Bozukluğu": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Yazım Kuralları": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Noktalama İşaretleri": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Dil Bilgisi": {"zorluk": "Orta", "ortalama_soru": 6},
-        "Sözel Mantık": {"zorluk": "Zor", "ortalama_soru": 2}
+        "Paragraf": {"zorluk": "Zor", "ortalama_soru": 23, "kategori": "Dil"},
+        "Cümlede Anlam": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Dil"},
+        "Sözcükte Anlam": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Dil"},
+        "Anlatım Bozukluğu": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Dil"},
+        "Yazım Kuralları": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber"},
+        "Noktalama İşaretleri": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber"},
+        "Dil Bilgisi": {"zorluk": "Orta", "ortalama_soru": 6, "kategori": "Ezber"},
+        "Sözel Mantık": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor"}
     },
     "Matematik": {
-        "Temel Kavramlar": {"zorluk": "Kolay", "ortalama_soru": 2},
-        "Sayı Basamakları": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Bölme / Bölünebilme": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "EBOB – EKOK": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Rasyonel / Kök / Üslü Sayılar": {"zorluk": "Orta", "ortalama_soru": 4},
-        "Denklem Çözme": {"zorluk": "Orta", "ortalama_soru": 3},
-        "Oran – Orantı": {"zorluk": "Kolay", "ortalama_soru": 2},
-        "Problemler": {"zorluk": "Zor", "ortalama_soru": 9},
-        "Kümeler, Mantık": {"zorluk": "Orta", "ortalama_soru": 3},
-        "Fonksiyon": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Permütasyon, Kombinasyon, Olasılık": {"zorluk": "Zor", "ortalama_soru": 3},
-        "Veri – Grafik": {"zorluk": "Kolay", "ortalama_soru": 1}
+        "Temel Kavramlar": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Zor"},
+        "Sayı Basamakları": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
+        "Bölme / Bölünebilme": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
+        "EBOB – EKOK": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Rasyonel / Kök / Üslü Sayılar": {"zorluk": "Orta", "ortalama_soru": 4, "kategori": "Zor"},
+        "Denklem Çözme": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
+        "Oran – Orantı": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Zor"},
+        "Problemler": {"zorluk": "Zor", "ortalama_soru": 9, "kategori": "Zor"},
+        "Kümeler, Mantık": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
+        "Fonksiyon": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
+        "Permütasyon, Kombinasyon, Olasılık": {"zorluk": "Zor", "ortalama_soru": 3, "kategori": "Zor"},
+        "Veri – Grafik": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"}
     },
     "Geometri": {
-        "Temel Kavramlar, Açılar": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Üçgenler": {"zorluk": "Orta", "ortalama_soru": 3},
-        "Çokgenler & Dörtgenler": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Çember & Daire": {"zorluk": "Zor", "ortalama_soru": 2},
-        "Analitik Geometri": {"zorluk": "Zor", "ortalama_soru": 1},
-        "Katı Cisimler": {"zorluk": "Orta", "ortalama_soru": 1}
+        "Temel Kavramlar, Açılar": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
+        "Üçgenler": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
+        "Çokgenler & Dörtgenler": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
+        "Çember & Daire": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor"},
+        "Analitik Geometri": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
+        "Katı Cisimler": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"}
     },
     "Fizik": {
-        "Fizik Bilimine Giriş": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Kuvvet – Hareket": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Enerji – İş – Güç": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Basınç – Kaldırma": {"zorluk": "Zor", "ortalama_soru": 1},
-        "Elektrik – Manyetizma": {"zorluk": "Zor", "ortalama_soru": 1},
-        "Optik – Dalgalar": {"zorluk": "Zor", "ortalama_soru": 1}
+        "Fizik Bilimine Giriş": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
+        "Kuvvet – Hareket": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
+        "Enerji – İş – Güç": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Basınç – Kaldırma": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
+        "Elektrik – Manyetizma": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
+        "Optik – Dalgalar": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"}
     },
     "Kimya": {
-        "Kimya Bilimi, Atom": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Periyodik Sistem, Bileşikler": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Kimyasal Türler & Etkileşim": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Karışımlar, Asit – Baz – Tuz": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Kimyasal Hesaplamalar": {"zorluk": "Zor", "ortalama_soru": 2}
+        "Kimya Bilimi, Atom": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta"},
+        "Periyodik Sistem, Bileşikler": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta"},
+        "Kimyasal Türler & Etkileşim": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Karışımlar, Asit – Baz – Tuz": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Kimyasal Hesaplamalar": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Orta"}
     },
     "Biyoloji": {
-        "Canlıların Temel Bileşenleri": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "Hücre – Organeller": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Hücre Zarından Madde Geçişi": {"zorluk": "Zor", "ortalama_soru": 1},
-        "Canlı Sınıflandırma – Sistemler": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Ekosistem, Madde Döngüleri": {"zorluk": "Orta", "ortalama_soru": 1}
+        "Canlıların Temel Bileşenleri": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta"},
+        "Hücre – Organeller": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Hücre Zarından Madde Geçişi": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
+        "Canlı Sınıflandırma – Sistemler": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta"},
+        "Ekosistem, Madde Döngüleri": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"}
     },
     "Tarih": {
-        "İlk ve Orta Çağ Uygarlıkları": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Osmanlı Tarihi": {"zorluk": "Orta", "ortalama_soru": 1},
-        "Kurtuluş Savaşı – Atatürk İlkeleri": {"zorluk": "Zor", "ortalama_soru": 2},
-        "Çağdaş Türkiye, İnkılaplar": {"zorluk": "Orta", "ortalama_soru": 1}
+        "İlk ve Orta Çağ Uygarlıkları": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Osmanlı Tarihi": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Kurtuluş Savaşı – Atatürk İlkeleri": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Kolay"},
+        "Çağdaş Türkiye, İnkılaplar": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"}
     },
     "Coğrafya": {
-        "Harita Bilgisi": {"zorluk": "Kolay", "ortalama_soru": 1},
-        "İklim – Yer Şekilleri": {"zorluk": "Orta", "ortalama_soru": 2},
-        "Beşeri ve Ekonomik Coğrafya": {"zorluk": "Orta", "ortalama_soru": 2}
+        "Harita Bilgisi": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "İklim – Yer Şekilleri": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Kolay"},
+        "Beşeri ve Ekonomik Coğrafya": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Kolay"}
     },
     "Felsefe": {
-        "Bilgi – Varlık – Ahlak": {"zorluk": "Zor", "ortalama_soru": 3},
-        "Siyaset – Din – Sanat": {"zorluk": "Zor", "ortalama_soru": 2}
+        "Bilgi – Varlık – Ahlak": {"zorluk": "Zor", "ortalama_soru": 3, "kategori": "Kolay"},
+        "Siyaset – Din – Sanat": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Kolay"}
     },
     "Din Kültürü": {
-        "İnanç, İbadet, Ahlak": {"zorluk": "Kolay", "ortalama_soru": 3},
-        "Hz. Muhammed & İslam Düşüncesi": {"zorluk": "Orta", "ortalama_soru": 2}
+        "İnanç, İbadet, Ahlak": {"zorluk": "Kolay", "ortalama_soru": 3, "kategori": "Kolay"},
+        "Hz. Muhammed & İslam Düşüncesi": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Kolay"}
     }
+}
+
+# Zaman dilimleri
+ZAMAN_DILIMLERI = {
+    "Zor": ["08:00-10:30", "16:00-18:00"],
+    "Orta": ["10:30-12:30", "19:00-21:00"],
+    "Kolay": ["13:30-15:30", "21:00-22:30"],
+    "Dil": ["06:30-08:00", "22:30-23:30"],
+    "Ezber": ["07:00-08:30", "22:00-23:00"]
 }
 
 # Zorluk katsayıları
@@ -105,51 +113,79 @@ ZORLUK_KATSAYILARI = {
     "Zor": 2
 }
 
-def get_ai_suggestion(konu_analizi):
-    """Groq AI'dan çalışma önerisi al"""
+def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
+    """Geliştirilmiş AI önerisi"""
     if not client:
         return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
     
     try:
         sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'], reverse=True)
-        kotu_konular = sorted_topics[:5]
-        iyi_konular = sorted_topics[-3:]
+        kotu_konular = sorted_topics[:8]
+        orta_konular = sorted_topics[8:16] if len(sorted_topics) > 8 else []
+        iyi_konular = sorted_topics[-5:]
         
+        # Ders bazında analiz
         ders_analizi = {}
         for konu, info in konu_analizi.items():
             ders = info['ders']
             if ders not in ders_analizi:
-                ders_analizi[ders] = {'toplam_puan': 0, 'konu_sayisi': 0}
+                ders_analizi[ders] = {'toplam_puan': 0, 'konu_sayisi': 0, 'zayif_konular': 0}
             ders_analizi[ders]['toplam_puan'] += info['oncelik_puani']
             ders_analizi[ders]['konu_sayisi'] += 1
+            if info['oncelik_puani'] > 5:
+                ders_analizi[ders]['zayif_konular'] += 1
         
         for ders in ders_analizi:
             ders_analizi[ders]['ortalama'] = ders_analizi[ders]['toplam_puan'] / ders_analizi[ders]['konu_sayisi']
+            ders_analizi[ders]['zayiflik_orani'] = ders_analizi[ders]['zayif_konular'] / ders_analizi[ders]['konu_sayisi']
         
-        en_kotu_ders = max(ders_analizi.items(), key=lambda x: x[1]['ortalama'])
+        en_zayif_ders = max(ders_analizi.items(), key=lambda x: x[1]['ortalama'])
+        
+        # Hedef belirleme
+        toplam_saat = gunluk_saat * gun_sayisi
+        kritik_konu_sayisi = len([k for k, v in konu_analizi.items() if v['oncelik_puani'] > 5])
         
         prompt = f"""
-        Sen deneyimli bir TYT koçusun. Bir öğrencinin performans analizi şu şekilde:
+        Sen TYT'de uzman bir eğitim koçusun. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş 30 günlük strateji hazırlayacaksın.
+
+        📊 ÖĞRENCİ PROFİLİ:
+        • Toplam çalışma süresi: {toplam_saat} saat ({gun_sayisi} gün x {gunluk_saat} saat)
+        • Kritik durumdaki konu sayısı: {kritik_konu_sayisi}
+        • En zayıf alan: {en_zayif_ders[0]} (Risk skoru: {en_zayif_ders[1]['ortalama']:.1f})
         
-        🔴 ÖNCELIKLI KONULAR (En kötü 5):
-        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Puan: {info['oncelik_puani']:.1f}" for konu, info in kotu_konular])}
+        🔴 ACİL MÜDAHALE GEREKTİREN KONULAR:
+        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Risk: {info['oncelik_puani']:.1f}/10" for konu, info in kotu_konular])}
         
-        🟢 İYI DURUMDA (En iyi 3):
-        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Puan: {info['oncelik_puani']:.1f}" for konu, info in iyi_konular])}
+        🟡 GELİŞTİRİLMESİ GEREKEN KONULAR:
+        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Risk: {info['oncelik_puani']:.1f}/10" for konu, info in orta_konular])}
         
-        📊 EN PROBLEMLI DERS: {en_kotu_ders[0]} (Ortalama: {en_kotu_ders[1]['ortalama']:.1f})
+        🟢 GÜÇLÜ ALANLAR (Koruma altında):
+        {chr(10).join([f"• {konu.split(' - ')[1]} ({konu.split(' - ')[0]}) - Risk: {info['oncelik_puani']:.1f}/10" for konu, info in iyi_konular])}
         
-        Kısa ve özgün bir çalışma stratejisi öner. Maksimum 200 kelime.
+        📈 DERS BAZLI ZAYIFLIK ANALİZİ:
+        {chr(10).join([f"• {ders}: %{data['zayiflik_orani']*100:.0f} zayıf konu oranı" for ders, data in ders_analizi.items()])}
+        
+        GÖREV: Aşağıdaki kriterlere göre 4 haftalık strateji hazırla:
+        1. İlk 2 hafta: Kritik konulara %70 odaklanma
+        2. 3. hafta: Orta düzey konuları güçlendirme
+        3. 4. hafta: Genel tekrar + güçlü alanları pekiştirme
+        4. Haftalık hedefler ve motivasyon önerileri
+        5. Hangi zaman dilimlerinde hangi konu türlerini çalışmalı
+        
+        Maksimum 300 kelime, pratik ve uygulanabilir öneriler ver.
         """
         
         chat_completion = client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "Sen uzman bir TYT koçusun. Öğrencilere kişiselleştirilmiş, pratik ve motive edici çalışma stratejileri veriyorsun."},
+                {
+                    "role": "system", 
+                    "content": "Sen TYT'de uzman, analitik düşünen ve öğrenci psikolojisini iyi bilen bir eğitim koçusun. Veriye dayalı, kişiselleştirilmiş ve motive edici stratejiler sunuyorsun."
+                },
                 {"role": "user", "content": prompt}
             ],
             model="llama3-70b-8192",
-            max_tokens=250,
-            temperature=0.8
+            max_tokens=400,
+            temperature=0.7
         )
         
         return chat_completion.choices[0].message.content
@@ -196,57 +232,145 @@ def analiz_et(veriler):
                     'yanlis': sonuclar['yanlis'],
                     'bos': sonuclar['bos'],
                     'zorluk': konu_bilgi['zorluk'],
+                    'kategori': konu_bilgi['kategori'],
                     'gercek_soru': sonuclar['gercek_soru']
                 }
     return analiz
 
-def program_olustur(analiz, baslangic_tarihi, gun_sayisi):
-    """Çalışma programı oluştur"""
+def program_olustur_zaman_dilimli(analiz, baslangic_tarihi, gun_sayisi, gunluk_saat):
+    """Zaman dilimli çalışma programı oluştur"""
     sorted_konular = sorted(analiz.items(), key=lambda x: x[1]['oncelik_puani'], reverse=True)
     
     program = []
-    gun_basina_konu = max(1, len(sorted_konular) // gun_sayisi)
+    current_date = baslangic_tarihi
     
-    for i, (konu_adi, bilgi) in enumerate(sorted_konular):
-        gun_no = min(i // gun_basina_konu, gun_sayisi - 1)
-        tarih = baslangic_tarihi + timedelta(days=gun_no)
+    # Kategorilere göre konuları ayır
+    kategoriler = {
+        "Zor": [],
+        "Orta": [],
+        "Kolay": [],
+        "Dil": [],
+        "Ezber": []
+    }
+    
+    for konu_adi, bilgi in sorted_konular:
+        kategori = bilgi['kategori']
+        kategoriler[kategori].append((konu_adi, bilgi))
+    
+    # Her gün için program oluştur
+    for gun in range(gun_sayisi):
+        tarih = current_date + timedelta(days=gun)
         
-        program.append({
-            'Tarih': tarih.strftime('%d.%m.%Y'),
-            'Gün': gun_no + 1,
-            'Ders': bilgi['ders'],
-            'Konu': bilgi['konu'],
-            'Öncelik Puanı': bilgi['oncelik_puani'],
-            'Zorluk': bilgi['zorluk'],
-            'Doğru': bilgi['dogru'],
-            'Yanlış': bilgi['yanlis'],
-            'Boş': bilgi['bos'],
-            'Gerçek Soru': bilgi['gercek_soru']
-        })
+        # Günlük saate göre zaman dilimlerini belirle
+        if gunluk_saat <= 2:
+            secilen_dilimler = ["08:00-10:30"]
+        elif gunluk_saat <= 4:
+            secilen_dilimler = ["08:00-10:30", "16:00-18:00"]
+        elif gunluk_saat <= 6:
+            secilen_dilimler = ["08:00-10:30", "10:30-12:30", "19:00-21:00"]
+        else:
+            secilen_dilimler = ["08:00-10:30", "10:30-12:30", "16:00-18:00", "19:00-21:00"]
+        
+        # Her zaman dilimine konu ata
+        for zaman_dilimi in secilen_dilimler:
+            # Öncelikli konu bul
+            secilen_konu = None
+            for kategori, konular in kategoriler.items():
+                if konular:
+                    secilen_konu = konular.pop(0)
+                    break
+            
+            if secilen_konu:
+                konu_adi, bilgi = secilen_konu
+                
+                program.append({
+                    'Gün': gun + 1,
+                    'Tarih': tarih.strftime('%d.%m.%Y'),
+                    'Zaman': zaman_dilimi,
+                    'Ders': bilgi['ders'],
+                    'Konu': bilgi['konu'],
+                    'Öncelik Puanı': bilgi['oncelik_puani'],
+                    'Zorluk': bilgi['zorluk'],
+                    'Kategori': bilgi['kategori'],
+                    'Doğru': bilgi['dogru'],
+                    'Yanlış': bilgi['yanlis'],
+                    'Boş': bilgi['bos']
+                })
     
     return program
 
-def excel_export(program_df):
-    """Excel dosyası oluştur"""
+def excel_export_professional(program_df):
+    """Profesyonel Excel çıktısı"""
     output = io.BytesIO()
     
-    try:
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "TYT Çalışma Programı"
+    
+    # Başlık stilleri
+    header_font = Font(bold=True, color="FFFFFF", size=12)
+    header_fill = PatternFill(start_color="2F4F4F", end_color="2F4F4F", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    
+    # Kenarlık
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Koşullu biçimlendirme renkleri
+    high_priority_fill = PatternFill(start_color="FFE4E1", end_color="FFE4E1", fill_type="solid")
+    hard_topic_fill = PatternFill(start_color="FFF8DC", end_color="FFF8DC", fill_type="solid")
+    
+    # Başlıkları ekle
+    for col, header in enumerate(program_df.columns, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+    
+    # Verileri ekle
+    for row_idx, row in enumerate(dataframe_to_rows(program_df, index=False, header=False), 2):
+        for col_idx, value in enumerate(row, 1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal="center", vertical="center")
             
-            workbook = writer.book
-            worksheet = writer.sheets['Çalışma Programı']
+            # Koşullu biçimlendirme
+            if col_idx == 6:  # Öncelik Puanı sütunu
+                if isinstance(value, (int, float)) and value > 5:
+                    cell.fill = high_priority_fill
+                    cell.font = Font(bold=True, color="8B0000")
             
-            worksheet.set_column('A:A', 12)
-            worksheet.set_column('B:B', 8)
-            worksheet.set_column('C:C', 15)
-            worksheet.set_column('D:D', 30)
-            worksheet.set_column('E:E', 15)
-            worksheet.set_column('F:F', 10)
-            worksheet.set_column('G:J', 8)
-    except ImportError:
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
+            if col_idx == 7:  # Zorluk sütunu
+                if value == "Zor":
+                    cell.fill = hard_topic_fill
+                    cell.font = Font(bold=True, color="FF8C00")
+    
+    # Sütun genişliklerini ayarla
+    column_widths = {
+        'A': 8,   # Gün
+        'B': 12,  # Tarih
+        'C': 15,  # Zaman
+        'D': 12,  # Ders
+        'E': 35,  # Konu
+        'F': 15,  # Öncelik Puanı
+        'G': 12,  # Zorluk
+        'H': 12,  # Kategori
+        'I': 8,   # Doğru
+        'J': 8,   # Yanlış
+        'K': 8    # Boş
+    }
+    
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+    
+    # Dosyayı kaydet
+    wb.save(output)
+    output.seek(0)
     
     return output.getvalue()
 
@@ -259,11 +383,17 @@ st.markdown("---")
 # Sidebar - AI Koç
 with st.sidebar:
     st.header("🤖 AI Koçun")
+    
+    # Çalışma parametreleri
+    st.subheader("📚 Çalışma Ayarları")
+    gunluk_saat = st.slider("Günlük Çalışma Saati", 1, 12, 4)
+    gun_sayisi = st.number_input("Kaç Gün Çalışacaksınız?", min_value=1, max_value=365, value=30)
+    
     if client:
         if st.button("🔥 Kişisel Strateji Al"):
             if 'analiz_sonucu' in st.session_state:
                 with st.spinner("AI senin için özel strateji hazırlıyor..."):
-                    suggestion = get_ai_suggestion(st.session_state['analiz_sonucu'])
+                    suggestion = get_ai_suggestion(st.session_state['analiz_sonucu'], gunluk_saat, gun_sayisi)
                     st.success("🎯 **Senin İçin Özel Strateji:**")
                     st.info(suggestion)
             else:
@@ -410,25 +540,30 @@ with tab3:
         with col1:
             baslangic_tarihi = st.date_input("Başlangıç Tarihi", datetime.now())
         
-        with col2:
-            gun_sayisi = st.number_input("Kaç Gün Çalışacaksınız?", min_value=1, max_value=365, value=30)
-        
-        if st.button("📋 Program Oluştur"):
-            program = program_olustur(st.session_state.analiz_sonucu, baslangic_tarihi, gun_sayisi)
-            program_df = pd.DataFrame(program)
-            st.session_state.program_df = program_df
-            
-            st.dataframe(program_df, use_container_width=True)
-            
-            st.subheader("📊 İlerleme Takibi")
-            dersler = program_df['Ders'].unique()
-            
-            for ders in dersler:
-                ders_konular = program_df[program_df['Ders'] == ders]
-                tamamlama_orani = len(ders_konular) / len(program_df) * 100
+        if st.button("📋 Zaman Dilimli Program Oluştur"):
+            with st.spinner("Biyolojik saatinize uygun program hazırlanıyor..."):
+                program = program_olustur_zaman_dilimli(
+                    st.session_state.analiz_sonucu, 
+                    baslangic_tarihi, 
+                    gun_sayisi, 
+                    gunluk_saat
+                )
+                program_df = pd.DataFrame(program)
+                st.session_state.program_df = program_df
                 
-                st.progress(tamamlama_orani / 100)
-                st.text(f"{ders}: {len(ders_konular)} konu - %{tamamlama_orani:.1f}")
+                st.dataframe(program_df, use_container_width=True)
+                
+                # İlerleme takibi
+                st.subheader("📊 İlerleme Takibi")
+                ders_ilerleme = program_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
+                ders_ilerleme['Tamamlanma Oranı'] = ders_ilerleme['Konu Sayısı'] / len(program_df) * 100
+                
+                fig = px.pie(ders_ilerleme, 
+                            names='Ders', 
+                            values='Konu Sayısı',
+                            title='Derslere Göre Konu Dağılımı',
+                            hole=0.3)
+                st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Önce analiz yapın!")
 
@@ -437,9 +572,9 @@ if 'program_df' in st.session_state:
     st.markdown("---")
     st.subheader("📁 Dışa Aktarma")
     
-    if st.button("📊 Excel'e Aktar"):
+    if st.button("💾 Profesyonel Excel Oluştur"):
         try:
-            excel_data = excel_export(st.session_state.program_df)
+            excel_data = excel_export_professional(st.session_state.program_df)
             st.download_button(
                 label="Excel Dosyasını İndir",
                 data=excel_data,
