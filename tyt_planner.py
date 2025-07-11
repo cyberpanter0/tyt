@@ -466,7 +466,7 @@ with st.sidebar:
 # Ana içerik
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
- with tab1:
+with tab1:
     st.header("Deneme Sonuçlarını Girin")
     
     # PDF'den Veri Çekme Bölümü
