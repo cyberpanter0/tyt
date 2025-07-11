@@ -467,41 +467,41 @@ with st.sidebar:
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
  with tab1:
-        st.header("Deneme Sonuçlarını Girin")
-        
-        # PDF'den Veri Çekme Bölümü
-        with st.expander("📄 PDF Karneden Otomatik Veri Çek", expanded=False):
-            uploaded_file = st.file_uploader("Deneme Sonuç Karnesi (PDF) Yükle", type="pdf")
-            
-            if uploaded_file is not None:
-                if st.button("PDF'den Verileri Çek ve Uygula"):
-                    with st.spinner("PDF analiz ediliyor..."):
-                        pdf_data = extract_data_from_pdf(uploaded_file)
-                        
-                        if pdf_data:
-                            # Mevcut verilerle birleştir
-                            if 'veriler' not in st.session_state:
-                                st.session_state.veriler = {}
-                            
-                            for ders, konular in pdf_data.items():
-                                if ders not in st.session_state.veriler:
-                                    st.session_state.veriler[ders] = {}
-                                
-                                for konu, sonuclar in konular.items():
-                                    # Sadece geçerli konuları işle
-                                    if konu in KONU_VERILERI.get(ders, {}):
-                                        st.session_state.veriler[ders][konu] = {
-                                            'dogru': sonuclar.get('dogru', 0),
-                                            'yanlis': sonuclar.get('yanlis', 0),
-                                            'bos': sonuclar.get('bos', 0),
-                                            'gercek_soru': sonuclar.get('gercek_soru', KONU_VERILERI[ders][konu]['ortalama_soru'])
-                                        }
-                            
-                            st.success("PDF'den veriler başarıyla çekildi ve uygulandı!")
-                            st.json(pdf_data)
-                        else:
-                            st.error("PDF analiz edilemedi. Lütfen manuel giriş yapın.")
+    st.header("Deneme Sonuçlarını Girin")
     
+    # PDF'den Veri Çekme Bölümü
+    with st.expander("📄 PDF Karneden Otomatik Veri Çek", expanded=False):
+        uploaded_file = st.file_uploader("Deneme Sonuç Karnesi (PDF) Yükle", type="pdf")
+        
+        if uploaded_file is not None:
+            if st.button("PDF'den Verileri Çek ve Uygula"):
+                with st.spinner("PDF analiz ediliyor..."):
+                    pdf_data = extract_data_from_pdf(uploaded_file)
+                    
+                    if pdf_data:
+                        # Mevcut verilerle birleştir
+                        if 'veriler' not in st.session_state:
+                            st.session_state.veriler = {}
+                        
+                        for ders, konular in pdf_data.items():
+                            if ders not in st.session_state.veriler:
+                                st.session_state.veriler[ders] = {}
+                            
+                            for konu, sonuclar in konular.items():
+                                # Sadece geçerli konuları işle
+                                if konu in KONU_VERILERI.get(ders, {}):
+                                    st.session_state.veriler[ders][konu] = {
+                                        'dogru': sonuclar.get('dogru', 0),
+                                        'yanlis': sonuclar.get('yanlis', 0),
+                                        'bos': sonuclar.get('bos', 0),
+                                        'gercek_soru': sonuclar.get('gercek_soru', KONU_VERILERI[ders][konu]['ortalama_soru'])
+                                    }
+                        
+                        st.success("PDF'den veriler başarıyla çekildi ve uygulandı!")
+                        st.json(pdf_data)
+                    else:
+                        st.error("PDF analiz edilemedi. Lütfen manuel giriş yapın.")
+
     for grup_adi, dersler in ders_gruplari.items():
         with st.expander(f"📚 {grup_adi}", expanded=False):
             for ders in dersler:
@@ -573,7 +573,6 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Progr
                             st.success(f"✅ Toplam: {toplam}")
                         else:
                             st.error(f"❌ Toplam: {toplam}/{gercek_soru}")
-
 with tab2:
     st.header("📊 Analiz Sonuçları")
     
