@@ -220,9 +220,15 @@ def simple_pdf_export(program_df):
         from fpdf import FPDF
         
         class PDF(FPDF):
+            def __init__(self):
+                super().__init__()
+                self.add_font('Arial', '', 'arial.ttf', uni=True)
+                self.add_font('Arial', 'B', 'arialbd.ttf', uni=True)
+                self.add_font('Arial', 'I', 'ariali.ttf', uni=True)
+                
             def header(self):
                 self.set_font('Arial', 'B', 16)
-                self.cell(0, 10, 'TYT Calisma Programi', 0, 1, 'C')
+                self.cell(0, 10, 'TYT Çalışma Programı', 0, 1, 'C')
                 self.ln(10)
             
             def footer(self):
@@ -238,14 +244,43 @@ def simple_pdf_export(program_df):
         pdf.ln(5)
         
         for _, row in program_df.iterrows():
-            # Türkçe karakterleri değiştir
-            ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-            konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-            pdf.cell(0, 8, f"{row['Tarih']} - {ders} - {konu}", 0, 1)
+            pdf.cell(0, 8, f"{row['Tarih']} - {row['Ders']} - {row['Konu']}", 0, 1)
         
         return pdf.output(dest='S').encode('latin-1')
     except ImportError:
         return None
+    except Exception:
+        # Fallback - font dosyaları yoksa basit metin
+        try:
+            from fpdf import FPDF
+            
+            class SimplePDF(FPDF):
+                def header(self):
+                    self.set_font('Arial', 'B', 16)
+                    self.cell(0, 10, 'TYT Calisma Programi', 0, 1, 'C')
+                    self.ln(10)
+                
+                def footer(self):
+                    self.set_y(-15)
+                    self.set_font('Arial', 'I', 8)
+                    self.cell(0, 10, f'Sayfa {self.page_no()}', 0, 0, 'C')
+            
+            pdf = SimplePDF()
+            pdf.add_page()
+            pdf.set_font('Arial', '', 10)
+            
+            pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}', 0, 1)
+            pdf.ln(5)
+            
+            for _, row in program_df.iterrows():
+                # Unicode karakterleri ASCII'ye çevir
+                ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
+                konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u').replace('–', '-')
+                pdf.cell(0, 8, f"{row['Tarih']} - {ders} - {konu}", 0, 1)
+            
+            return pdf.output(dest='S').encode('latin-1')
+        except Exception:
+            return None
 
 # Streamlit arayüzü
 st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
