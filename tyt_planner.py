@@ -253,7 +253,7 @@ def simple_pdf_export(program_df):
     except Exception:
         # Fallback - font dosyaları yoksa basit metin
         try:
-            from fpdf import FPDF
+            from fpdf2 import FPDF
             
             class SimplePDF(FPDF):
                 def header(self):
