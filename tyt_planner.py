@@ -1,19 +1,24 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from fpdf import FPDF
 from datetime import datetime, timedelta
 import json
 import io
-from groq import Groq
-import requests
 import os
 
-# Groq AI Client
+# Groq AI Client - Hata kontrolü ile
 @st.cache_resource
 def init_groq_client():
-    api_key = st.secrets.get("GROQ_API_KEY", "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")
-    return Groq(api_key=api_key)
+    try:
+        from groq import Groq
+        api_key = st.secrets.get("GROQ_API_KEY", "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")
+        return Groq(api_key=api_key)
+    except ImportError:
+        st.error("Groq kütüphanesi yüklenemedi. AI özellikler devre dışı.")
+        return None
+    except Exception as e:
+        st.error(f"Groq client başlatılamadı: {str(e)}")
+        return None
 
 client = init_groq_client()
 
@@ -96,6 +101,9 @@ KONU_VERILERI = {
 
 def get_ai_suggestion(konu_analizi):
     """Groq AI'dan çalışma önerisi al"""
+    if not client:
+        return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
+    
     try:
         # En düşük puanlı (en iyi) 3 konu ve en yüksek puanlı (en kötü) 3 konu
         sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'])
@@ -126,7 +134,7 @@ def get_ai_suggestion(konu_analizi):
         
         return chat_completion.choices[0].message.content
     except Exception as e:
-        return "AI önerisi alınırken hata oluştu. Lütfen daha sonra tekrar deneyin."
+        return f"AI önerisi alınırken hata oluştu: {str(e)}"
 
 def hesapla_oncelik_puani(dogru, yanlis, bos):
     """Öncelik puanını hesapla"""
@@ -182,50 +190,62 @@ def program_olustur(analiz, baslangic_tarihi, gun_sayisi):
 def excel_export(program_df):
     """Excel dosyası oluştur"""
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
-        
-        workbook = writer.book
-        worksheet = writer.sheets['Çalışma Programı']
-        
-        # Sütun genişliklerini ayarla
-        worksheet.set_column('A:A', 12)  # Tarih
-        worksheet.set_column('B:B', 8)   # Gün
-        worksheet.set_column('C:C', 15)  # Ders
-        worksheet.set_column('D:D', 30)  # Konu
-        worksheet.set_column('E:E', 15)  # Öncelik Puanı
-        worksheet.set_column('F:F', 10)  # Zorluk
-        worksheet.set_column('G:I', 8)   # Doğru, Yanlış, Boş
+    
+    try:
+        # xlsxwriter kullanmaya çalış
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
+            
+            workbook = writer.book
+            worksheet = writer.sheets['Çalışma Programı']
+            
+            # Sütun genişliklerini ayarla
+            worksheet.set_column('A:A', 12)  # Tarih
+            worksheet.set_column('B:B', 8)   # Gün
+            worksheet.set_column('C:C', 15)  # Ders
+            worksheet.set_column('D:D', 30)  # Konu
+            worksheet.set_column('E:E', 15)  # Öncelik Puanı
+            worksheet.set_column('F:F', 10)  # Zorluk
+            worksheet.set_column('G:I', 8)   # Doğru, Yanlış, Boş
+    except ImportError:
+        # xlsxwriter yoksa openpyxl kullan
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            program_df.to_excel(writer, sheet_name='Çalışma Programı', index=False)
     
     return output.getvalue()
 
-def pdf_export(program_df):
-    """PDF raporu oluştur"""
-    class PDF(FPDF):
-        def header(self):
-            self.set_font('Arial', 'B', 16)
-            self.cell(0, 10, 'TYT Calisma Programi', 0, 1, 'C')
-            self.ln(10)
+def simple_pdf_export(program_df):
+    """Basit PDF raporu oluştur"""
+    try:
+        from fpdf import FPDF
         
-        def footer(self):
-            self.set_y(-15)
-            self.set_font('Arial', 'I', 8)
-            self.cell(0, 10, f'Sayfa {self.page_no()}', 0, 0, 'C')
-    
-    pdf = PDF()
-    pdf.add_page()
-    pdf.set_font('Arial', '', 10)
-    
-    pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}', 0, 1)
-    pdf.ln(5)
-    
-    for _, row in program_df.iterrows():
-        # Türkçe karakterleri değiştir
-        ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-        konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
-        pdf.cell(0, 8, f"{row['Tarih']} - {ders} - {konu}", 0, 1)
-    
-    return pdf.output(dest='S').encode('latin-1')
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('Arial', 'B', 16)
+                self.cell(0, 10, 'TYT Calisma Programi', 0, 1, 'C')
+                self.ln(10)
+            
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('Arial', 'I', 8)
+                self.cell(0, 10, f'Sayfa {self.page_no()}', 0, 0, 'C')
+        
+        pdf = PDF()
+        pdf.add_page()
+        pdf.set_font('Arial', '', 10)
+        
+        pdf.cell(0, 10, f'Rapor Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}', 0, 1)
+        pdf.ln(5)
+        
+        for _, row in program_df.iterrows():
+            # Türkçe karakterleri değiştir
+            ders = str(row['Ders']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
+            konu = str(row['Konu']).replace('ç', 'c').replace('ğ', 'g').replace('ı', 'i').replace('ö', 'o').replace('ş', 's').replace('ü', 'u')
+            pdf.cell(0, 8, f"{row['Tarih']} - {ders} - {konu}", 0, 1)
+        
+        return pdf.output(dest='S').encode('latin-1')
+    except ImportError:
+        return None
 
 # Streamlit arayüzü
 st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
@@ -236,13 +256,16 @@ st.markdown("---")
 # Sidebar - AI Koç
 with st.sidebar:
     st.header("🤖 AI Koçun")
-    if st.button("AI Önerisi Al"):
-        if 'analiz_sonucu' in st.session_state:
-            with st.spinner("AI analiz yapıyor..."):
-                suggestion = get_ai_suggestion(st.session_state['analiz_sonucu'])
-                st.info(suggestion)
-        else:
-            st.warning("Önce veri giriş yapın!")
+    if client:
+        if st.button("AI Önerisi Al"):
+            if 'analiz_sonucu' in st.session_state:
+                with st.spinner("AI analiz yapıyor..."):
+                    suggestion = get_ai_suggestion(st.session_state['analiz_sonucu'])
+                    st.info(suggestion)
+            else:
+                st.warning("Önce veri giriş yapın!")
+    else:
+        st.warning("AI hizmeti şu anda kullanılamıyor.")
 
 # Ana içerik
 tab1, tab2, tab3 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program"])
@@ -379,23 +402,32 @@ if 'program_df' in st.session_state:
     
     with col1:
         if st.button("📊 Excel'e Aktar"):
-            excel_data = excel_export(st.session_state.program_df)
-            st.download_button(
-                label="Excel Dosyasını İndir",
-                data=excel_data,
-                file_name=f"tyt_program_{datetime.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            try:
+                excel_data = excel_export(st.session_state.program_df)
+                st.download_button(
+                    label="Excel Dosyasını İndir",
+                    data=excel_data,
+                    file_name=f"tyt_program_{datetime.now().strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except Exception as e:
+                st.error(f"Excel export hatası: {str(e)}")
     
     with col2:
         if st.button("📄 PDF'e Aktar"):
-            pdf_data = pdf_export(st.session_state.program_df)
-            st.download_button(
-                label="PDF Dosyasını İndir",
-                data=pdf_data,
-                file_name=f"tyt_rapor_{datetime.now().strftime('%Y%m%d')}.pdf",
-                mime="application/pdf"
-            )
+            try:
+                pdf_data = simple_pdf_export(st.session_state.program_df)
+                if pdf_data:
+                    st.download_button(
+                        label="PDF Dosyasını İndir",
+                        data=pdf_data,
+                        file_name=f"tyt_rapor_{datetime.now().strftime('%Y%m%d')}.pdf",
+                        mime="application/pdf"
+                    )
+                else:
+                    st.error("PDF export için fpdf2 kütüphanesi gerekli.")
+            except Exception as e:
+                st.error(f"PDF export hatası: {str(e)}")
 
 # Footer
 st.markdown("---")
