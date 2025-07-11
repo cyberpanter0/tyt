@@ -147,7 +147,7 @@ def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
         kritik_konu_sayisi = len([k for k, v in konu_analizi.items() if v['oncelik_puani'] > 5])
         
         prompt = f"""
-        Sen TYT'de uzman bir eğitim koçusun. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş {gun_sayisi} günlük strateji hazırlayacaksın.
+        Sen TYT'de uzman bir eğitim koçusun. Türkçe cevaplamalısın sadece. Öğrencinin detaylı performans analizini yapıp, kişiselleştirilmiş {gun_sayisi} günlük strateji hazırlayacaksın.
 
         📊 ÖĞRENCİ PROFİLİ:
         • Toplam çalışma süresi: {toplam_saat} saat ({gun_sayisi} gün x {gunluk_saat} saat)
