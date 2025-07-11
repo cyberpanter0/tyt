@@ -114,17 +114,6 @@ ZORLUK_KATSAYILARI = {
 }
 
 def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
-    """Geliştirilmiş AI önerisi"""
-    if not client:
-        return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
-    
-    try:
-        sorted_topics = sorted(konu_analizi.items(), key=lambda x: x[1]['oncelik_puani'], reverse=True)
-        kotu_konular = sorted_topics[:8]
-        orta_konular = sorted_topics[8:16] if len(sorted_topics) > 8 else []
-        iyi_konular = sorted_topics[-5:]
-        
-        def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
     """Detaylı ve kapsamlı AI önerisi"""
     if not client:
         return "AI hizmeti şu anda kullanılamıyor. Lütfen manuel olarak öncelikli konulara odaklanın."
@@ -197,7 +186,7 @@ def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
         Lütfen en az 800 kelime olacak şekilde detaylı, pratik ve uygulanabilir öneriler ver.
         """
         
-         chat_completion = client.chat.completions.create(
+        chat_completion = client.chat.completions.create(
             messages=[
                 {
                     "role": "system", 
