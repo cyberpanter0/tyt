@@ -3,9 +3,6 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
 import io
-import json  # Bu satırı ekleyin
-import PyPDF2
-import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -201,61 +198,6 @@ def get_ai_suggestion(konu_analizi, gunluk_saat, gun_sayisi):
     except Exception as e:
         return f"AI önerisi alınırken hata oluştu: {str(e)}"
 
-# PDF Karneden Veri Çıkarma Fonksiyonu
-def extract_data_from_pdf(pdf_file):
-    """PDF karnesinden veri çıkar"""
-    try:
-        # PDF'den metin çıkar
-        pdf_reader = PyPDF2.PdfReader(pdf_file)
-        text = ""
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-        
-        # AI ile metni analiz et ve verileri çıkar
-        prompt = f"""
-        Aşağıda bir TYT deneme sınavı karnesinden çıkarılmış metin bulunmaktadır. 
-        Bu metinden dersler ve konular bazında doğru, yanlış ve boş sayılarını çıkar.
-        
-        Çıktı formatı JSON olmalı ve aşağıdaki yapıda olmalı:
-        {{
-          "Türkçe": {{
-            "Paragraf": {{"dogru": sayı, "yanlis": sayı, "bos": sayı, "gercek_soru": sayı}},
-            "Cümlede Anlam": {{...}},
-            ...
-          }},
-          "Matematik": {{...}},
-          ...
-        }}
-        
-        Dersler: Türkçe, Matematik, Geometri, Fizik, Kimya, Biyoloji, Tarih, Coğrafya, Felsefe, Din Kültürü
-        Konular: Sistemde tanımlı olan konu isimlerini kullan
-        
-        METİN:
-        {text[:10000]}  # İlk 10,000 karakteri al
-        
-        Sadece JSON formatında cevap ver, başka hiçbir şey yazma.
-        """
-        
-        response = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[
-                {"role": "system", "content": "Sadece istenen JSON formatında çıktı ver."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.1,
-            max_tokens=4000
-        )
-        
-        json_str = response.choices[0].message.content
-        
-        # JSON'u temizle
-        json_str = json_str.replace("```json", "").replace("```", "").strip()
-        data = json.loads(json_str)
-        
-        return data
-    except Exception as e:
-        st.error(f"PDF analiz hatası: {str(e)}")
-        return None
 
 def hesapla_oncelik_puani(dogru, yanlis, bos, zorluk, ortalama_soru):
     """Geliştirilmiş öncelik puanı hesapla"""
@@ -440,10 +382,10 @@ def excel_export_professional(program_df):
     return output.getvalue()
 
 # Streamlit arayüzü
-def main():
-    st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
-    st.title("🎯 TYT Hazırlık Uygulaması")
-    st.markdown("---")
+st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
+
+st.title("🎯 TYT Hazırlık Uygulaması")
+st.markdown("---")
 
 # Sidebar - AI Koç
 with st.sidebar:
@@ -466,73 +408,25 @@ with st.sidebar:
     else:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
-# Define ders_gruplari before using it
-ders_gruplari = {
-    "Temel Matematik": ["Matematik"],
-    "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
-    "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe"],
-    "Dil ve Edebiyat": ["Türkçe", "Türk Dili ve Edebiyatı"]
-}
-
-# Define ders_gruplari before using it
-ders_gruplari = {
-    "Temel Matematik": ["Matematik"],
-    "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
-    "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe"],
-    "Dil ve Edebiyat": ["Türkçe", "Türk Dili ve Edebiyatı"]
-}
-
 # Ana içerik
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
 with tab1:
     st.header("Deneme Sonuçlarını Girin")
     
-    # PDF'den Veri Çekme Bölümü
-    with st.expander("📄 PDF Karneden Otomatik Veri Çek", expanded=False):
-        uploaded_file = st.file_uploader("Deneme Sonuç Karnesi (PDF) Yükle", type="pdf")
-        
-        if uploaded_file is not None:
-            if st.button("PDF'den Verileri Çek ve Uygula"):
-                with st.spinner("PDF analiz ediliyor..."):
-                    pdf_data = extract_data_from_pdf(uploaded_file)
-                    
-                    if pdf_data:
-                        # Mevcut verilerle birleştir
-                        if 'veriler' not in st.session_state:
-                            st.session_state.veriler = {}
-                        
-                        for ders, konular in pdf_data.items():
-                            if ders not in st.session_state.veriler:
-                                st.session_state.veriler[ders] = {}
-                            
-                            for konu, sonuclar in konular.items():
-                                # Sadece geçerli konuları işle
-                                if konu in KONU_VERILERI.get(ders, {}):
-                                    st.session_state.veriler[ders][konu] = {
-                                        'dogru': sonuclar.get('dogru', 0),
-                                        'yanlis': sonuclar.get('yanlis', 0),
-                                        'bos': sonuclar.get('bos', 0),
-                                        'gercek_soru': sonuclar.get('gercek_soru', KONU_VERILERI[ders][konu]['ortalama_soru'])
-                                    }
-                        
-                        st.success("PDF'den veriler başarıyla çekildi ve uygulandı!")
-                        st.json(pdf_data)
-                    else:
-                        st.error("PDF analiz edilemedi. Lütfen manuel giriş yapın.")
-
-    # Session state'i başlat
     if 'veriler' not in st.session_state:
         st.session_state.veriler = {}
+    
+    ders_gruplari = {
+        "Türkçe": ["Türkçe"],
+        "Matematik": ["Matematik", "Geometri"],
+        "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
+        "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe", "Din Kültürü"]
+    }
     
     for grup_adi, dersler in ders_gruplari.items():
         with st.expander(f"📚 {grup_adi}", expanded=False):
             for ders in dersler:
-                # Dersin KONU_VERILERI'nde olup olmadığını kontrol et
-                if ders not in KONU_VERILERI:
-                    st.warning(f"⚠️ {ders} dersi için konu verileri tanımlanmamış!")
-                    continue
-                    
                 st.subheader(f"{ders}")
                 
                 if ders not in st.session_state.veriler:
@@ -601,6 +495,7 @@ with tab1:
                             st.success(f"✅ Toplam: {toplam}")
                         else:
                             st.error(f"❌ Toplam: {toplam}/{gercek_soru}")
+
 with tab2:
     st.header("📊 Analiz Sonuçları")
     
