@@ -471,9 +471,6 @@ ders_gruplari = {
     "Dil ve Edebiyat": ["Türkçe", "Türk Dili ve Edebiyatı"]
 }
 
-# Ana içerik
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
-
 # Define ders_gruplari before using it
 ders_gruplari = {
     "Temel Matematik": ["Matematik"],
