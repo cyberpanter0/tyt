@@ -261,7 +261,7 @@ def analiz_pdf_karnesi(uploaded_file):
         return {"error": f"PDF analiz hatası: {str(e)}"}
 
 # Yeni PDF Analiz Sekmesi
-with tab4:
+    with tab4:
     st.header("📊 PDF Karnesi Analizi")
     st.info("Deneme sınavı PDF karnenizi yükleyin, otomatik olarak verileriniz analiz edilsin!")
     
