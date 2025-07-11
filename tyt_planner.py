@@ -402,7 +402,7 @@ with st.sidebar:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
 # Ana içerik
-tab1, tab2, tab3 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar"])
 
 with tab1:
     st.header("Deneme Sonuçlarını Girin")
@@ -566,6 +566,411 @@ with tab3:
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Önce analiz yapın!")
+        # Kaynak önerme modülü - tab4 olarak eklenecek
+
+# KITAP VERİLERİ
+KITAP_ONERILERI = {
+    "Türkçe": {
+        "Kolay": [
+            "3D Türkçe Soru Bankası (Başlangıç)",
+            "Tonguç Paragrafik",
+            "Palme Türkçe Konu Anlatımlı",
+            "Karekök 0 Türkçe",
+            "Bilgiseli Türkçe"
+        ],
+        "Orta": [
+            "Limit Yayınları TYT Türkçe",
+            "ÜçDörtBeş TYT Paragraf Soru Bankası",
+            "Hız ve Renk Türkçe",
+            "Apotemi Türkçe Soru Bankası (TYT için uyarlanmış hali)",
+            "Benim Hocam TYT Türkçe Video Ders Defteri"
+        ]
+    },
+    "Matematik": {
+        "Kolay": [
+            "Karekök 0 Matematik",
+            "Tonguç Kampüs TYT Matematik (ilk seviye)",
+            "3D Matematik Konu Anlatımı",
+            "Kolay Matematik Serisi (Birey A)",
+            "Palme TYT Temel Matematik"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Matematik Soru Bankası",
+            "Limit Matematik (Kırmızı Seri)",
+            "Bilgiseli TYT Matematik",
+            "Apotemi TYT Matematik Başlangıç Serisi",
+            "Endemik TYT Matematik"
+        ]
+    },
+    "Geometri": {
+        "Kolay": [
+            "Karekök 0 Matematik",
+            "Tonguç Kampüs TYT Matematik (ilk seviye)",
+            "3D Matematik Konu Anlatımı",
+            "Kolay Matematik Serisi (Birey A)",
+            "Palme TYT Temel Matematik"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Matematik Soru Bankası",
+            "Limit Matematik (Kırmızı Seri)",
+            "Bilgiseli TYT Matematik",
+            "Apotemi TYT Matematik Başlangıç Serisi",
+            "Endemik TYT Matematik"
+        ]
+    },
+    "Fizik": {
+        "Kolay": [
+            "3D TYT Fizik",
+            "Palme Fen Bilimleri Konu Anlatımlı Set",
+            "Karekök 0 Fen Serisi",
+            "Birey A Fen Bilimleri",
+            "Kolay Fen Bilimleri – Kampüs Yayınları"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Fen Bilimleri Soru Bankası",
+            "Apotemi TYT Fen Bilimleri Modüler Set",
+            "Hız ve Renk TYT Fen Bilimleri",
+            "Aydın TYT Fen Bilimleri Soru Bankası",
+            "Benim Hocam Video Ders Defteri (Fen Seti)"
+        ]
+    },
+    "Kimya": {
+        "Kolay": [
+            "3D TYT Kimya",
+            "Palme Fen Bilimleri Konu Anlatımlı Set",
+            "Karekök 0 Fen Serisi",
+            "Birey A Fen Bilimleri",
+            "Kolay Fen Bilimleri – Kampüs Yayınları"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Fen Bilimleri Soru Bankası",
+            "Apotemi TYT Fen Bilimleri Modüler Set",
+            "Hız ve Renk TYT Fen Bilimleri",
+            "Aydın TYT Fen Bilimleri Soru Bankası",
+            "Benim Hocam Video Ders Defteri (Fen Seti)"
+        ]
+    },
+    "Biyoloji": {
+        "Kolay": [
+            "3D TYT Biyoloji",
+            "Palme Fen Bilimleri Konu Anlatımlı Set",
+            "Karekök 0 Fen Serisi",
+            "Birey A Fen Bilimleri",
+            "Kolay Fen Bilimleri – Kampüs Yayınları"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Fen Bilimleri Soru Bankası",
+            "Apotemi TYT Fen Bilimleri Modüler Set",
+            "Hız ve Renk TYT Fen Bilimleri",
+            "Aydın TYT Fen Bilimleri Soru Bankası",
+            "Benim Hocam Video Ders Defteri (Fen Seti)"
+        ]
+    },
+    "Tarih": {
+        "Kolay": [
+            "Karekök 0 Sosyal Bilimler",
+            "3D TYT Sosyal Bilimler Soru Bankası",
+            "Tonguç TYT Sosyal Konu Anlatımlı",
+            "Palme Sosyal Bilimler",
+            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Sosyal Bilimler",
+            "Limit Yayınları TYT Sosyal",
+            "Bilgiseli Sosyal Bilimler Soru Bankası",
+            "Endemik Sosyal Bilimler",
+            "Karekök Sosyal Bilimler (standart seviye)"
+        ]
+    },
+    "Coğrafya": {
+        "Kolay": [
+            "Karekök 0 Sosyal Bilimler",
+            "3D TYT Sosyal Bilimler Soru Bankası",
+            "Tonguç TYT Sosyal Konu Anlatımlı",
+            "Palme Sosyal Bilimler",
+            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Sosyal Bilimler",
+            "Limit Yayınları TYT Sosyal",
+            "Bilgiseli Sosyal Bilimler Soru Bankası",
+            "Endemik Sosyal Bilimler",
+            "Karekök Sosyal Bilimler (standart seviye)"
+        ]
+    },
+    "Felsefe": {
+        "Kolay": [
+            "Karekök 0 Sosyal Bilimler",
+            "3D TYT Sosyal Bilimler Soru Bankası",
+            "Tonguç TYT Sosyal Konu Anlatımlı",
+            "Palme Sosyal Bilimler",
+            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Sosyal Bilimler",
+            "Limit Yayınları TYT Sosyal",
+            "Bilgiseli Sosyal Bilimler Soru Bankası",
+            "Endemik Sosyal Bilimler",
+            "Karekök Sosyal Bilimler (standart seviye)"
+        ]
+    },
+    "Din Kültürü": {
+        "Kolay": [
+            "Karekök 0 Sosyal Bilimler",
+            "3D TYT Sosyal Bilimler Soru Bankası",
+            "Tonguç TYT Sosyal Konu Anlatımlı",
+            "Palme Sosyal Bilimler",
+            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
+        ],
+        "Orta": [
+            "ÜçDörtBeş TYT Sosyal Bilimler",
+            "Limit Yayınları TYT Sosyal",
+            "Bilgiseli Sosyal Bilimler Soru Bankası",
+            "Endemik Sosyal Bilimler",
+            "Karekök Sosyal Bilimler (standart seviye)"
+        ]
+    }
+}
+
+# YouTube kanalları ve genel öneriler
+YOUTUBE_KANALLARI = {
+    "Türkçe": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Matematik Sevdası",
+        "Öğretmen Akademisi"
+    ],
+    "Matematik": [
+        "Tonguç Akademi",
+        "Matematik Sevdası",
+        "Benim Hocam",
+        "Ders Vakti",
+        "Matematik Dünyası"
+    ],
+    "Geometri": [
+        "Tonguç Akademi",
+        "Matematik Sevdası",
+        "Benim Hocam",
+        "Ders Vakti",
+        "Geometri Dünyası"
+    ],
+    "Fizik": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Fizik Dünyası",
+        "Fen Bilimleri Akademisi"
+    ],
+    "Kimya": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Kimya Dünyası",
+        "Fen Bilimleri Akademisi"
+    ],
+    "Biyoloji": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Biyoloji Dünyası",
+        "Fen Bilimleri Akademisi"
+    ],
+    "Tarih": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Tarih Dünyası",
+        "Sosyal Bilimler Akademisi"
+    ],
+    "Coğrafya": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Coğrafya Dünyası",
+        "Sosyal Bilimler Akademisi"
+    ],
+    "Felsefe": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Felsefe Dünyası",
+        "Sosyal Bilimler Akademisi"
+    ],
+    "Din Kültürü": [
+        "Benim Hocam",
+        "Tonguç Akademi",
+        "Ders Vakti",
+        "Din Kültürü Akademisi",
+        "Sosyal Bilimler Akademisi"
+    ]
+}
+
+def hesapla_ders_basari_orani(analiz_sonucu):
+    """Her ders için başarı oranını hesapla"""
+    ders_analizi = {}
+    
+    for konu_adi, bilgi in analiz_sonucu.items():
+        ders = bilgi['ders']
+        if ders not in ders_analizi:
+            ders_analizi[ders] = {
+                'toplam_puan': 0,
+                'konu_sayisi': 0,
+                'ortalama_puan': 0
+            }
+        
+        ders_analizi[ders]['toplam_puan'] += bilgi['oncelik_puani']
+        ders_analizi[ders]['konu_sayisi'] += 1
+    
+    # Ortalama hesapla ve seviye belirle
+    for ders in ders_analizi:
+        ortalama = ders_analizi[ders]['toplam_puan'] / ders_analizi[ders]['konu_sayisi']
+        ders_analizi[ders]['ortalama_puan'] = ortalama
+        
+        # Seviye belirleme
+        if ortalama >= 5:
+            ders_analizi[ders]['seviye'] = 'Orta'
+        else:
+            ders_analizi[ders]['seviye'] = 'Kolay'
+    
+    return ders_analizi
+
+def youtube_video_ara(ders_adi, konu_adi):
+    """YouTube'dan video ara"""
+    try:
+        # YouTube API yerine genel öneriler
+        return [
+            f"TYT {ders_adi} {konu_adi} Konu Anlatımı",
+            f"TYT {ders_adi} {konu_adi} Soru Çözümü",
+            f"TYT {ders_adi} {konu_adi} Test Çözümü",
+            f"{ders_adi} {konu_adi} Örnekler",
+            f"{ders_adi} {konu_adi} Pratik Yöntemler"
+        ]
+    except Exception:
+        return [f"TYT {ders_adi} {konu_adi} videolarını YouTube'da arayın"]
+
+# TAB4 İÇERİĞİ
+with tab4:
+    st.header("📚 Akıllı Kaynak Önerileri")
+    
+    if 'analiz_sonucu' in st.session_state:
+        ders_basari = hesapla_ders_basari_orani(st.session_state.analiz_sonucu)
+        
+        # Genel durum
+        st.subheader("🎯 Genel Durum Analizi")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] >= 5]
+            st.metric("Zayıf Dersler", len(zayif_dersler))
+        
+        with col2:
+            iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] < 5]
+            st.metric("İyi Dersler", len(iyi_dersler))
+        
+        with col3:
+            ortalama_risk = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari)
+            st.metric("Genel Risk Skoru", f"{ortalama_risk:.1f}")
+        
+        st.markdown("---")
+        
+        # Ders bazlı öneriler
+        for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1]['ortalama_puan'], reverse=True):
+            with st.expander(f"📖 {ders} - Risk Skoru: {bilgi['ortalama_puan']:.1f} ({'🔴 Acil' if bilgi['ortalama_puan'] >= 5 else '🟡 Orta' if bilgi['ortalama_puan'] >= 3 else '🟢 İyi'})", expanded=bilgi['ortalama_puan'] >= 5):
+                
+                # Kitap önerileri
+                st.subheader(f"📚 {ders} için Kitap Önerileri")
+                
+                seviye = bilgi['seviye']
+                if ders in KITAP_ONERILERI:
+                    kitaplar = KITAP_ONERILERI[ders][seviye]
+                    
+                    cols = st.columns(2)
+                    for i, kitap in enumerate(kitaplar):
+                        with cols[i % 2]:
+                            st.info(f"📖 {kitap}")
+                
+                # YouTube kanalları
+                st.subheader(f"🎥 {ders} için YouTube Kanalları")
+                if ders in YOUTUBE_KANALLARI:
+                    kanallar = YOUTUBE_KANALLARI[ders]
+                    
+                    cols = st.columns(3)
+                    for i, kanal in enumerate(kanallar):
+                        with cols[i % 3]:
+                            st.success(f"📺 {kanal}")
+                
+                # Bu dersteki zayıf konular
+                st.subheader(f"🔍 {ders} - Zayıf Konular")
+                ders_zayif_konular = [
+                    (konu_adi, konu_bilgi) for konu_adi, konu_bilgi in st.session_state.analiz_sonucu.items()
+                    if konu_bilgi['ders'] == ders and konu_bilgi['oncelik_puani'] >= 3
+                ]
+                
+                if ders_zayif_konular:
+                    sorted_zayif = sorted(ders_zayif_konular, key=lambda x: x[1]['oncelik_puani'], reverse=True)
+                    
+                    for konu_adi, konu_bilgi in sorted_zayif[:5]:  # En zayıf 5 konu
+                        konu_adi_clean = konu_adi.split(' - ')[1]
+                        
+                        with st.container():
+                            st.write(f"**{konu_adi_clean}** (Risk: {konu_bilgi['oncelik_puani']:.1f})")
+                            
+                            # Video önerileri
+                            video_onerileri = youtube_video_ara(ders, konu_adi_clean)
+                            
+                            cols = st.columns(2)
+                            with cols[0]:
+                                st.write("🎬 **Video Önerileri:**")
+                                for video in video_onerileri[:3]:
+                                    st.write(f"• {video}")
+                            
+                            with cols[1]:
+                                st.write("📝 **Çalışma Önerileri:**")
+                                if konu_bilgi['zorluk'] == 'Zor':
+                                    st.write("• Temel kavramları tekrar edin")
+                                    st.write("• Bol örnek çözün")
+                                    st.write("• Günde 30 dk ayırın")
+                                elif konu_bilgi['zorluk'] == 'Orta':
+                                    st.write("• Soru bankası çözün")
+                                    st.write("• Testler yapın")
+                                    st.write("• Günde 20 dk ayırın")
+                                else:
+                                    st.write("• Kısa tekrarlar yapın")
+                                    st.write("• Formülleri ezberleyin")
+                                    st.write("• Günde 10 dk ayırın")
+                            
+                            st.markdown("---")
+                else:
+                    st.info(f"🎉 {ders} dersinde kritik zayıflık yok!")
+        
+        # Genel öneriler
+        st.markdown("---")
+        st.subheader("💡 Genel Strateji Önerileri")
+        
+        risk_skoru = ortalama_risk
+        
+        if risk_skoru >= 5:
+            st.error("🚨 **Acil Durum Stratejisi:**")
+            st.write("• Temel konulara odaklanın")
+            st.write("• Günde en az 6 saat çalışın")
+            st.write("• Kolay kitaplardan başlayın")
+            st.write("• YouTube'dan konu anlatımları izleyin")
+        elif risk_skoru >= 3:
+            st.warning("⚠️ **Orta Seviye Strateji:**")
+            st.write("• Zayıf konulara ağırlık verin")
+            st.write("• Günde 4-5 saat çalışın")
+            st.write("• Soru bankası çözmeye odaklanın")
+            st.write("• Düzenli testler yapın")
+        else:
+            st.success("✅ **Pekiştirme Stratejisi:**")
+            st.write("• Tüm konuları dengeli çalışın")
+            st.write("• Günde 3-4 saat çalışın")
+            st.write("• Deneme sınavlarına odaklanın")
+            st.write("• Hızınızı artırmaya çalışın")
+    
+    else:
+        st.warning("⚠️ Kaynak önerileri için önce analiz yapın!")
 
 # Export butonu
 if 'program_df' in st.session_state:
