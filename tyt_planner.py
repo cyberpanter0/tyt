@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import json
 import io
 import os
+import fpdf2
 
 # Groq AI Client - Hata kontrolü ile
 @st.cache_resource
