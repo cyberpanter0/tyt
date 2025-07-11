@@ -510,48 +510,26 @@ with tab1:
                     else:
                         st.error("PDF analiz edilemedi. Lütfen manuel giriş yapın.")
 
-    # Session state'i başlat
-    if 'veriler' not in st.session_state:
-        st.session_state.veriler = {}
-    
-    for grup_adi, dersler in ders_gruplari.items():
-        with st.expander(f"📚 {grup_adi}", expanded=False):
-            for ders in dersler:
-                st.subheader(f"{ders}")
+   # Session state'i başlat
+if 'veriler' not in st.session_state:
+    st.session_state.veriler = {}
+
+for grup_adi, dersler in ders_gruplari.items():
+    with st.expander(f"📚 {grup_adi}", expanded=False):
+        for ders in dersler:
+            # Dersin KONU_VERILERI'nde olup olmadığını kontrol et
+            if ders not in KONU_VERILERI:
+                st.warning(f"⚠️ {ders} dersi için konu verileri tanımlanmamış!")
+                continue
                 
-                if ders not in st.session_state.veriler:
-                    st.session_state.veriler[ders] = {}
-                
-                cols = st.columns(3)
-                for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
-                    col_idx = i % 3
-                    
-                    with cols[col_idx]:
-                        st.markdown(f"**{konu}**")
-                        st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
-                        
-                        if konu not in st.session_state.veriler[ders]:
-                            st.session_state.veriler[ders][konu] = {
-                                'dogru': 0, 'yanlis': 0, 'bos': 0, 'gercek_soru': bilgi['ortalama_soru']
-                            }
-                        
-                        # Gerçek soru sayısı
-                        gercek_soru = st.number_input(
-                            f"Denemede Bu Konudan Kaç Soru Vardı?",
-                            min_value=0,
-                            max_value=50,
-                            key=f"{ders}_{konu}_gercek",
-                            value=st.session_state.veriler[ders][konu]['gercek_soru']
-                        )
-                        
-                        # Doğru
-                        dogru = st.number_input(
-                            f"Doğru", 
-                            min_value=0, 
-                            max_value=gercek_soru,
-                            key=f"{ders}_{konu}_dogru", 
-                            value=st.session_state.veriler[ders][konu]['dogru']
-                        )
+            st.subheader(f"{ders}")
+            
+            if ders not in st.session_state.veriler:
+                st.session_state.veriler[ders] = {}
+            
+            cols = st.columns(3)
+            for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
+                # Kodun geri kalanı aynı...
                         
                         # Yanlış
                         yanlis = st.number_input(
