@@ -44,7 +44,8 @@ KONU_VERILERI ={
     "Oran-Orantı": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
     "Denklem Çözme": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
     "Kümeler": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" }
-  },
+    "Fonksiyonlar": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"}
+    },
   "Geometri": {
     "Açılar & Üçgenler": { "zorluk": "Zor", "ortalama_soru": 4, "kategori": "Zor" },
     "Katı Cisimler": { "zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor" },
