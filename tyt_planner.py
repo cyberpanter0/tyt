@@ -47,7 +47,7 @@ KONU_VERILERI = {
     "Fonksiyonlar":          { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Zor" }
   },
   "Geometri": {
-    "Açılar ve Üçgenler":    { "zorluk": "Zor",   "ortalama_soru": 4,  "kategori": "Zor" },
+    "Açılar & Üçgenler":    { "zorluk": "Zor",   "ortalama_soru": 4,  "kategori": "Zor" },
     "Katı Cisimler":         { "zorluk": "Zor",   "ortalama_soru": 2,  "kategori": "Zor" },
     "Dikdörtgen":            { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Zor" },
     "Daire":                 { "zorluk": "Zor",   "ortalama_soru": 2,  "kategori": "Zor" },
