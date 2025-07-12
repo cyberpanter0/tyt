@@ -23,83 +23,89 @@ def init_groq_client():
 client = init_groq_client()
 
 # Güncellenmiş Konu verileri (yeni soru sayılarıyla)
-KONU_VERILERI ={
+const KONU_VERILERI = {
   "Türkçe": {
-    "Paragraf": { "zorluk": "Zor", "ortalama_soru": 24, "kategori": "Dil" },
-    "Cümlede Anlam": { "zorluk": "Orta", "ortalama_soru": 5, "kategori": "Dil" },
-    "Sözcükte Anlam": { "zorluk": "Orta", "ortalama_soru": 3, "kategori": "Dil" },
-    "Dil Bilgisi": { "zorluk": "Orta", "ortalama_soru": 4, "kategori": "Ezber" },
-    "Yazım Kuralları": { "zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Ezber" },
-    "Noktalama İşaretleri": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber" },
-    "Ses Bilgisi": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber" }
+    "Paragraf":              { "zorluk": "Zor",   "ortalama_soru": 23, "kategori": "Dil" },
+    "Cümlede Anlam":         { "zorluk": "Orta",  "ortalama_soru": 5,  "kategori": "Dil" },
+    "Sözcükte Anlam":        { "zorluk": "Orta",  "ortalama_soru": 3,  "kategori": "Dil" },
+    "Dil Bilgisi":           { "zorluk": "Orta",  "ortalama_soru": 4,  "kategori": "Ezber" },
+    "Yazım Kuralları":       { "zorluk": "Kolay", "ortalama_soru": 2,  "kategori": "Ezber" },
+    "Noktalama İşaretleri":  { "zorluk": "Kolay", "ortalama_soru": 2,  "kategori": "Ezber" },
+    "Ses Bilgisi":           { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Ezber" }
   },
   "Matematik": {
-    "Problemler": { "zorluk": "Zor", "ortalama_soru": 12, "kategori": "Zor" },
-    "Temel Kavramlar": { "zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor" },
-    "Sayı Basamakları": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Rasyonel Sayılar": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Mutlak Değer": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor" },
-    "Üslü Sayılar": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Köklü Sayılar": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Oran-Orantı": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Denklem Çözme": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Kümeler": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor" },
-    "Fonksiyonlar": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"}
-    
+    "Problemler":            { "zorluk": "Zor",   "ortalama_soru": 12, "kategori": "Zor" },
+    "Temel Kavramlar":       { "zorluk": "Orta",  "ortalama_soru": 3,  "kategori": "Zor" },
+    "Sayı Basamakları":      { "zorluk": "Orta",  "ortalama_soru": 2,  "kategori": "Zor" },
+    "Rasyonel Sayılar":      { "zorluk": "Orta",  "ortalama_soru": 2,  "kategori": "Zor" },
+    "Mutlak Değer":          { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Zor" },
+    "Üslü Sayılar":          { "zorluk": "Orta",  "ortalama_soru": 2,  "kategori": "Zor" },
+    "Köklü Sayılar":         { "zorluk": "Orta",  "ortalama_soru": 2,  "kategori": "Zor" },
+    "Oran-Orantı":           { "zorluk": "Orta",  "ortalama_soru": 2,  "kategori": "Zor" },
+    "Denklem Çözme":         { "zorluk": "Orta",  "ortalama_soru": 2,  "kategori": "Zor" },
+    "Kümeler":               { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Zor" },
+    "Fonksiyonlar":          { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Zor" }
   },
   "Geometri": {
-    "Açılar & Üçgenler": { "zorluk": "Zor", "ortalama_soru": 4, "kategori": "Zor" },
-    "Katı Cisimler": { "zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor" },
-    "Dikdörtgen": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor" },
-    "Daire": { "zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor" },
-    "Analitik Geometri": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor" }
-  },
-  "Fizik": {
-    "Elektrik": { "zorluk": "Zor", "ortalama_soru": 2, "kategori": "Orta" },
-    "Optik": { "zorluk": "Zor", "ortalama_soru": 2, "kategori": "Orta" },
-    "Hareket": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" },
-    "Isı": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" }
-  },
-  "Kimya": {
-    "Atom": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta" },
-    "Tepkimeler": { "zorluk": "Zor", "ortalama_soru": 2, "kategori": "Orta" },
-    "Asit-Baz": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" },
-    "Organik": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta" }
-  },
-  "Biyoloji": {
-    "Hücre": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta" },
-    "Sınıflandırma": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta" },
-    "Ekoloji": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" },
-    "Genetik": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta" },
-    "Çevre": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" }
+    "Açılar ve Üçgenler":    { "zorluk": "Zor",   "ortalama_soru": 4,  "kategori": "Zor" },
+    "Katı Cisimler":         { "zorluk": "Zor",   "ortalama_soru": 2,  "kategori": "Zor" },
+    "Dikdörtgen":            { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Zor" },
+    "Daire":                 { "zorluk": "Zor",   "ortalama_soru": 2,  "kategori": "Zor" },
+    "Analitik Geometri":     { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Zor" }
   },
   "Tarih": {
-    "İlk ve Orta Çağ": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "İslamiyet'in Kabulü": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Osmanlı": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Milli Mücadele": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Atatürkçülük": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" }
+    "İlk ve Orta Çağ":       { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "İslamiyetin Kabulü":    { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Osmanlı":               { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Milli Mücadele":        { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Atatürkçülük":          { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" }
   },
   "Coğrafya": {
-    "İklim": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Yeryüzü Şekilleri": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Nüfus & Yerleşme": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Harita": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Ekonomi": { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay" }
+    "İklim":                 { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Yeryüzü Şekilleri":     { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Nüfus ve Yerleşme":     { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Harita":                { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Ekonomi":               { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Kolay" }
   },
   "Felsefe": {
-    "Felsefe Konusu": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Bilgi Felsefesi": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Ahlak Felsefesi": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Varlık Felsefesi": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay" }
+    "Felsefenin Konusu":     { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Bilgi Felsefesi":       { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Ahlak Felsefesi":       { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Varlık Felsefesi":      { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Bilim Felsefesi":       { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Kolay" }
   },
   "Din Kültürü ve Ahlak Bilgisi": {
-    "Bilgi & İnanç": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Din ve İslam": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "İbadet": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
-    "Gençlik": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" }
+    "Bilgi ve İnanç":        { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Din ve İslam":          { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "İslam ve İbadet":       { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "Gençlik ve Değerler":   { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" },
+    "İslam ve Bilim":        { "zorluk": "Kolay", "ortalama_soru": 1,  "kategori": "Kolay" }
+  },
+  "Fizik": {
+    "Elektrik ve Manyetizma":{ "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Orta" },
+    "Optik":                 { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Orta" },
+    "Hareket ve Kuvvet":     { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Orta" },
+    "Isı ve Sıcaklık":       { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Orta" },
+    "Madde ve Özellikleri":  { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Orta" },
+    "Basınç":                { "zorluk": "Zor",   "ortalama_soru": 1,  "kategori": "Orta" },
+    "Dalgalar":              { "zorluk": "Orta",  "ortalama_soru": 1,  "kategori": "Orta" }
+  },
+  "Kimya": {
+    "Atom ve Periyodik Sistem": { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta" },
+    "Kimyasal Tepkimeler":      { "zorluk": "Zor",  "ortalama_soru": 2, "kategori": "Orta" },
+    "Asit-Baz":                 { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" },
+    "Organik Kimya":            { "zorluk": "Zor",  "ortalama_soru": 1, "kategori": "Orta" },
+    "Kimya ve Enerji":          { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" }
+  },
+  "Biyoloji": {
+    "Hücre":                     { "zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta" },
+    "Canlıların Sınıflandırılması": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta" },
+    "Ekoloji":                   { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" },
+    "Genetik":                   { "zorluk": "Zor",  "ortalama_soru": 1, "kategori": "Orta" },
+    "Canlılar ve Çevre":         { "zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta" }
   }
-}
+};
+
 
 # Kitap ve YouTube kaynakları
 KITAP_ONERILERI = {
