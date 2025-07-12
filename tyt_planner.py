@@ -802,7 +802,7 @@ with tab3:
     else:
         st.warning("Önce analiz yapın!")
 
-# YENİ TAB4: Kaynaklar
+# TAB4 İÇERİĞİ
 with tab4:
     st.header("📚 Akıllı Kaynak Önerileri")
     
@@ -813,22 +813,96 @@ with tab4:
         st.subheader("🎯 Genel Durum Analizi")
         col1, col2, col3 = st.columns(3)
         
-        zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] >= 7]
-        iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] < 4]
-        ortalama_risk = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari) if ders_basari else 0
+        # Düzeltme: expanded_value hesaplaması güncellendi
+        zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi.get('ortalama_puan', 0) >= 5]
+        iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi.get('ortalama_puan', 0) < 5]
+        ortalama_risk = sum(bilgi.get('ortalama_puan', 0) for bilgi in ders_basari.values()) / len(ders_basari) if ders_basari else 0
         
-        col1.metric("Zor Seviye Dersler", len(zayif_dersler))
-        col2.metric("Kolay Seviye Dersler", len(iyi_dersler))
+        col1.metric("Zayıf Dersler", len(zayif_dersler))
+        col2.metric("İyi Dersler", len(iyi_dersler))
         col3.metric("Genel Risk Skoru", f"{ortalama_risk:.1f}")
         
         st.markdown("---")
         
-        # Ders bazlı öneriler
-        for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1]['ortalama_puan'], reverse=True):
+# Ders bazlı öneriler
+        for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1].get('ortalama_puan', 0), reverse=True):
+            # DÜZELTME: expanded_value güvenli hesaplama
+            ortalama_puan = float(bilgi.get('ortalama_puan', 0))
+            seviye = bilgi.get('seviye', 'Bilinmiyor')
+            
             with st.expander(
-                f"📖 {ders} - Seviye: {bilgi['seviye']} (Risk: {bilgi['ortalama_puan']:.1f})",
-                expanded=bilgi['ortalama_puan'] >= 7
+                f"📖 {ders} - Seviye: {seviye} (Risk: {ortalama_puan:.1f})",
+                expanded=ortalama_puan >= 5  # Yalnızca yüksek riskliler açık gelsin
             ):
+                
+                # Kitap önerileri
+                st.subheader(f"📚 {ders} için Kitap Önerileri")
+                
+                seviye = bilgi.get('seviye', 'Orta')  # Varsayılan seviye
+                if ders in KITAP_ONERILERI:
+                    kitaplar = KITAP_ONERILERI[ders].get(seviye, [])
+                    
+                    cols = st.columns(2)
+                    for i, kitap in enumerate(kitaplar):
+                        with cols[i % 2]:
+                            st.info(f"📖 {kitap}")
+                
+                # YouTube kanalları
+                st.subheader(f"🎥 {ders} için YouTube Kanalları")
+                if ders in YOUTUBE_KANALLARI:
+                    kanallar = YOUTUBE_KANALLARI[ders]
+                    
+                    cols = st.columns(3)
+                    for i, kanal in enumerate(kanallar):
+                        with cols[i % 3]:
+                            st.success(f"📺 {kanal}")
+                
+                # Bu dersteki zayıf konular
+                st.subheader(f"🔍 {ders} - Zayıf Konular")
+                ders_zayif_konular = [
+                    (konu_adi, konu_bilgi) for konu_adi, konu_bilgi in st.session_state.analiz_sonucu.items()
+                    if konu_bilgi.get('ders') == ders and konu_bilgi.get('oncelik_puani', 0) >= 3
+                ]
+                
+                if ders_zayif_konular:
+                    sorted_zayif = sorted(ders_zayif_konular, key=lambda x: x[1].get('oncelik_puani', 0), reverse=True)
+                    
+                    for konu_adi, konu_bilgi in sorted_zayif[:5]:  # En zayıf 5 konu
+                        konu_adi_clean = konu_adi.split(' - ')[1] if ' - ' in konu_adi else konu_adi
+                        
+                        with st.container():
+                            risk_puani = konu_bilgi.get('oncelik_puani', 0)
+                            st.write(f"**{konu_adi_clean}** (Risk: {risk_puani:.1f})")
+                            
+                            # Video önerileri
+                            video_onerileri = youtube_video_ara(ders, konu_adi_clean)
+                            
+                            cols = st.columns(2)
+                            with cols[0]:
+                                st.write("🎬 **Video Önerileri:**")
+                                for video in video_onerileri[:3]:
+                                    st.write(f"• {video}")
+                            
+                            with cols[1]:
+                                st.write("📝 **Çalışma Önerileri:**")
+                                zorluk = konu_bilgi.get('zorluk', 'Orta')
+                                if zorluk == 'Zor':
+                                    st.write("• Temel kavramları tekrar edin")
+                                    st.write("• Bol örnek çözün")
+                                    st.write("• Günde 30 dk ayırın")
+                                elif zorluk == 'Orta':
+                                    st.write("• Soru bankası çözün")
+                                    st.write("• Testler yapın")
+                                    st.write("• Günde 20 dk ayırın")
+                                else:
+                                    st.write("• Kısa tekrarlar yapın")
+                                    st.write("• Formülleri ezberleyin")
+                                    st.write("• Günde 10 dk ayırın")
+                            
+                            st.markdown("---")
+                else:
+                    st.info(f"🎉 {ders} dersinde kritik zayıflık yok!")
+                
                 # Kaynak önerileri
                 st.subheader("📚 Kaynak Önerileri")
                 
@@ -985,7 +1059,7 @@ with tab4:
                             st.markdown(f"- {video}")
                 else:
                     st.info("Bu ders için analiz edilmiş konu bulunamadı.")
-    else:
+      else:
         st.warning("⚠️ Kaynak önerileri için önce analiz yapın!")
 
 # Yeni tab: Öğrenci Özeti
