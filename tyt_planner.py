@@ -91,7 +91,7 @@ KONU_VERILERI ={
     "Ahlak Felsefesi": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay" },
     "Varlık Felsefesi": { "zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay" }
   },
-  "Din Kültürü": {
+  "Din Kültürü ve Ahlak Bilgisi": {
     "Bilgi & İnanç": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
     "Din ve İslam": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
     "İbadet": { "zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay" },
