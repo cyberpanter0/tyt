@@ -7,7 +7,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from groq import Groq
-import numpy as np  # log1p için eklendi
+import numpy as np
 
 # Groq AI Client
 @st.cache_resource
@@ -511,22 +511,32 @@ with tab1:
                             value=st.session_state.veriler[ders][konu]['gercek_soru']
                         )
                         
-                        # Doğru
+                        # Doğru cevaplar
+                        current_dogru = st.session_state.veriler[ders][konu]['dogru']
+                        if current_dogru > gercek_soru:
+                            current_dogru = gercek_soru
+                            
                         dogru = st.number_input(
                             f"Doğru", 
                             min_value=0, 
                             max_value=gercek_soru,
                             key=f"{ders}_{konu}_dogru", 
-                            value=st.session_state.veriler[ders][konu]['dogru']
+                            value=current_dogru
                         )
                         
-                        # Yanlış
+                        # Yanlış cevaplar (düzeltme burada)
+                        current_yanlis = st.session_state.veriler[ders][konu]['yanlis']
+                        max_yanlis = max(0, gercek_soru - dogru)
+                        
+                        if current_yanlis > max_yanlis:
+                            current_yanlis = max_yanlis
+                            
                         yanlis = st.number_input(
                             f"Yanlış", 
                             min_value=0, 
-                            max_value=max(0, gercek_soru - dogru),
+                            max_value=max_yanlis,
                             key=f"{ders}_{konu}_yanlis",
-                            value=st.session_state.veriler[ders][konu]['yanlis']
+                            value=current_yanlis
                         )
                         
                         # Boş otomatik hesapla
@@ -552,7 +562,6 @@ with tab1:
                             st.success(f"✅ Toplam: {toplam}")
                         else:
                             st.error(f"❌ Toplam: {toplam}/{gercek_soru}")
-
 with tab2:
     st.header("📊 Analiz Sonuçları")
     
