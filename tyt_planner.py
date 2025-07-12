@@ -21,80 +21,87 @@ def init_groq_client():
 
 client = init_groq_client()
 
-# Konu verileri
+# Güncellenmiş Konu verileri (yeni soru sayılarıyla)
 KONU_VERILERI = {
     "Türkçe": {
-        "Paragraf": {"zorluk": "Zor", "ortalama_soru": 23, "kategori": "Dil"},
-        "Cümlede Anlam": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Dil"},
-        "Sözcükte Anlam": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Dil"},
-        "Anlatım Bozukluğu": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Dil"},
-        "Yazım Kuralları": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber"},
-        "Noktalama İşaretleri": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber"},
-        "Dil Bilgisi": {"zorluk": "Orta", "ortalama_soru": 6, "kategori": "Ezber"},
-        "Sözel Mantık": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor"}
+        "Paragraf": {"zorluk": "Zor", "ortalama_soru": 24, "kategori": "Dil"},
+        "Cümlede Anlam": {"zorluk": "Orta", "ortalama_soru": 5, "kategori": "Dil"},
+        "Sözcükte Anlam": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Dil"},
+        "Dil Bilgisi": {"zorluk": "Orta", "ortalama_soru": 4, "kategori": "Ezber"},
+        "Yazım Kuralları": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Ezber"},
+        "Noktalama İşaretleri": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Ezber"},
+        "Ses Bilgisi": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Ezber"}
     },
     "Matematik": {
-        "Temel Kavramlar": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Zor"},
-        "Sayı Basamakları": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
-        "Bölme / Bölünebilme": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
-        "EBOB – EKOK": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
-        "Rasyonel / Kök / Üslü Sayılar": {"zorluk": "Orta", "ortalama_soru": 4, "kategori": "Zor"},
-        "Denklem Çözme": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
-        "Oran – Orantı": {"zorluk": "Kolay", "ortalama_soru": 2, "kategori": "Zor"},
-        "Problemler": {"zorluk": "Zor", "ortalama_soru": 9, "kategori": "Zor"},
-        "Kümeler, Mantık": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
-        "Fonksiyon": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
-        "Permütasyon, Kombinasyon, Olasılık": {"zorluk": "Zor", "ortalama_soru": 3, "kategori": "Zor"},
-        "Veri – Grafik": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"}
+        "Problemler": {"zorluk": "Zor", "ortalama_soru": 12, "kategori": "Zor"},
+        "Temel Kavramlar": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
+        "Sayı Basamakları": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
+        "Rasyonel Sayılar": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
+        "Mutlak Değer": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Üslü Sayılar": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Köklü Sayılar": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Oran-Orantı": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Denklem Çözme": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Kümeler": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Fonksiyonlar": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
     },
     "Geometri": {
-        "Temel Kavramlar, Açılar": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
-        "Üçgenler": {"zorluk": "Orta", "ortalama_soru": 3, "kategori": "Zor"},
-        "Çokgenler & Dörtgenler": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
-        "Çember & Daire": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor"},
+        "Açılar & Üçgenler": {"zorluk": "Zor", "ortalama_soru": 3, "kategori": "Zor"},
+        "Katı Cisimler": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Zor"},
+        "Dikdörtgen": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
+        "Daire": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
         "Analitik Geometri": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
-        "Katı Cisimler": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"}
     },
     "Fizik": {
-        "Fizik Bilimine Giriş": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Zor"},
-        "Kuvvet – Hareket": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Zor"},
-        "Enerji – İş – Güç": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Zor"},
-        "Basınç – Kaldırma": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
-        "Elektrik – Manyetizma": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"},
-        "Optik – Dalgalar": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Zor"}
+        "Elektrik": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
+        "Optik": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
+        "Hareket": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Isı": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Madde Özellikleri": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Basınç": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
+        "Dalgalar": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
     },
     "Kimya": {
-        "Kimya Bilimi, Atom": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta"},
-        "Periyodik Sistem, Bileşikler": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta"},
-        "Kimyasal Türler & Etkileşim": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
-        "Karışımlar, Asit – Baz – Tuz": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
-        "Kimyasal Hesaplamalar": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Orta"}
+        "Atom": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta"},
+        "Tepkimeler": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Orta"},
+        "Asit-Baz": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Organik": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
+        "Enerji": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
     },
     "Biyoloji": {
-        "Canlıların Temel Bileşenleri": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta"},
-        "Hücre – Organeller": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
-        "Hücre Zarından Madde Geçişi": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
-        "Canlı Sınıflandırma – Sistemler": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta"},
-        "Ekosistem, Madde Döngüleri": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"}
+        "Hücre": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Orta"},
+        "Sınıflandırma": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Orta"},
+        "Ekoloji": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
+        "Genetik": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Orta"},
+        "Çevre": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Orta"},
     },
     "Tarih": {
-        "İlk ve Orta Çağ Uygarlıkları": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
-        "Osmanlı Tarihi": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
-        "Kurtuluş Savaşı – Atatürk İlkeleri": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Kolay"},
-        "Çağdaş Türkiye, İnkılaplar": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"}
+        "İlk ve Orta Çağ": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "İslamiyet'in Kabulü": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Osmanlı": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Milli Mücadele": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Atatürkçülük": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
     },
     "Coğrafya": {
-        "Harita Bilgisi": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
-        "İklim – Yer Şekilleri": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Kolay"},
-        "Beşeri ve Ekonomik Coğrafya": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Kolay"}
+        "İklim": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Yeryüzü Şekilleri": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Nüfus & Yerleşme": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Harita": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Ekonomi": {"zorluk": "Orta", "ortalama_soru": 1, "kategori": "Kolay"},
     },
     "Felsefe": {
-        "Bilgi – Varlık – Ahlak": {"zorluk": "Zor", "ortalama_soru": 3, "kategori": "Kolay"},
-        "Siyaset – Din – Sanat": {"zorluk": "Zor", "ortalama_soru": 2, "kategori": "Kolay"}
+        "Felsefe Konusu": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Bilgi Felsefesi": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Ahlak Felsefesi": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Varlık Felsefesi": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Bilim Felsefesi": {"zorluk": "Zor", "ortalama_soru": 1, "kategori": "Kolay"},
     },
     "Din Kültürü": {
-        "İnanç, İbadet, Ahlak": {"zorluk": "Kolay", "ortalama_soru": 3, "kategori": "Kolay"},
-        "Hz. Muhammed & İslam Düşüncesi": {"zorluk": "Orta", "ortalama_soru": 2, "kategori": "Kolay"}
+        "Bilgi & İnanç": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Din ve İslam": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "İbadet": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "Gençlik": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
+        "İslam & Bilim": {"zorluk": "Kolay", "ortalama_soru": 1, "kategori": "Kolay"},
     }
 }
 
@@ -438,6 +445,47 @@ def hesapla_performans_ozeti(veriler):
     
     return ozet, ders_bazli
 
+def hesapla_ders_basari_orani(analiz_sonucu):
+    """Her ders için başarı oranını hesapla"""
+    ders_analizi = {}
+    
+    for konu_adi, bilgi in analiz_sonucu.items():
+        ders = bilgi['ders']
+        if ders not in ders_analizi:
+            ders_analizi[ders] = {
+                'toplam_puan': 0,
+                'konu_sayisi': 0,
+                'ortalama_puan': 0,
+                'seviye': 'Kolay'
+            }
+        
+        ders_analizi[ders]['toplam_puan'] += bilgi['oncelik_puani']
+        ders_analizi[ders]['konu_sayisi'] += 1
+    
+    # Ortalama hesapla ve seviye belirle (YENİ ALGORİTMA)
+    for ders in ders_analizi:
+        ortalama = ders_analizi[ders]['toplam_puan'] / ders_analizi[ders]['konu_sayisi']
+        ders_analizi[ders]['ortalama_puan'] = ortalama
+        
+        # Yeni seviye algoritması
+        if ortalama >= 7:
+            ders_analizi[ders]['seviye'] = 'Zor'
+        elif ortalama >= 4:
+            ders_analizi[ders]['seviye'] = 'Orta'
+        else:
+            ders_analizi[ders]['seviye'] = 'Kolay'
+    
+    return ders_analizi
+
+def youtube_video_ara(ders_adi, konu_adi):
+    """YouTube'dan video ara"""
+    return [
+        f"TYT {ders_adi} {konu_adi} Konu Anlatımı",
+        f"TYT {ders_adi} {konu_adi} Soru Çözümü",
+        f"TYT {ders_adi} {konu_adi} Tekrar Videosu",
+        f"TYT {ders_adi} {konu_adi} Pratik Yöntemler"
+    ]
+
 # Streamlit arayüzü
 st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
 
@@ -754,288 +802,7 @@ with tab3:
     else:
         st.warning("Önce analiz yapın!")
 
-# KITAP VERİLERİ
-KITAP_ONERILERI = {
-    "Türkçe": {
-        "Kolay": [
-            "3D Türkçe Soru Bankası (Başlangıç)",
-            "Tonguç Paragrafik",
-            "Palme Türkçe Konu Anlatımlı",
-            "Karekök 0 Türkçe",
-            "Bilgiseli Türkçe"
-        ],
-        "Orta": [
-            "Limit Yayınları TYT Türkçe",
-            "ÜçDörtBeş TYT Paragraf Soru Bankası",
-            "Hız ve Renk Türkçe",
-            "Apotemi Türkçe Soru Bankası (TYT için uyarlanmış hali)",
-            "Benim Hocam TYT Türkçe Video Ders Defteri"
-        ]
-    },
-    "Matematik": {
-        "Kolay": [
-            "Karekök 0 Matematik",
-            "Tonguç Kampüs TYT Matematik (ilk seviye)",
-            "3D Matematik Konu Anlatımı",
-            "Kolay Matematik Serisi (Birey A)",
-            "Palme TYT Temel Matematik"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Matematik Soru Bankası",
-            "Limit Matematik (Kırmızı Seri)",
-            "Bilgiseli TYT Matematik",
-            "Apotemi TYT Matematik Başlangıç Serisi",
-            "Endemik TYT Matematik"
-        ]
-    },
-    "Geometri": {
-        "Kolay": [
-            "Karekök 0 Matematik",
-            "Tonguç Kampüs TYT Matematik (ilk seviye)",
-            "3D Matematik Konu Anlatımı",
-            "Kolay Matematik Serisi (Birey A)",
-            "Palme TYT Temel Matematik"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Matematik Soru Bankası",
-            "Limit Matematik (Kırmızı Seri)",
-            "Bilgiseli TYT Matematik",
-            "Apotemi TYT Matematik Başlangıç Serisi",
-            "Endemik TYT Matematik"
-        ]
-    },
-    "Fizik": {
-        "Kolay": [
-            "3D TYT Fizik",
-            "Palme Fen Bilimleri Konu Anlatımlı Set",
-            "Karekök 0 Fen Serisi",
-            "Birey A Fen Bilimleri",
-            "Kolay Fen Bilimleri – Kampüs Yayınları"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Fen Bilimleri Soru Bankası",
-            "Apotemi TYT Fen Bilimleri Modüler Set",
-            "Hız ve Renk TYT Fen Bilimleri",
-            "Aydın TYT Fen Bilimleri Soru Bankası",
-            "Benim Hocam Video Ders Defteri (Fen Seti)"
-        ]
-    },
-    "Kimya": {
-        "Kolay": [
-            "3D TYT Kimya",
-            "Palme Fen Bilimleri Konu Anlatımlı Set",
-            "Karekök 0 Fen Serisi",
-            "Birey A Fen Bilimleri",
-            "Kolay Fen Bilimleri – Kampüs Yayınları"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Fen Bilimleri Soru Bankası",
-            "Apotemi TYT Fen Bilimleri Modüler Set",
-            "Hız ve Renk TYT Fen Bilimleri",
-            "Aydın TYT Fen Bilimleri Soru Bankası",
-            "Benim Hocam Video Ders Defteri (Fen Seti)"
-        ]
-    },
-    "Biyoloji": {
-        "Kolay": [
-            "3D TYT Biyoloji",
-            "Palme Fen Bilimleri Konu Anlatımlı Set",
-            "Karekök 0 Fen Serisi",
-            "Birey A Fen Bilimleri",
-            "Kolay Fen Bilimleri – Kampüs Yayınları"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Fen Bilimleri Soru Bankası",
-            "Apotemi TYT Fen Bilimleri Modüler Set",
-            "Hız ve Renk TYT Fen Bilimleri",
-            "Aydın TYT Fen Bilimleri Soru Bankası",
-            "Benim Hocam Video Ders Defteri (Fen Seti)"
-        ]
-    },
-    "Tarih": {
-        "Kolay": [
-            "Karekök 0 Sosyal Bilimler",
-            "3D TYT Sosyal Bilimler Soru Bankası",
-            "Tonguç TYT Sosyal Konu Anlatımlı",
-            "Palme Sosyal Bilimler",
-            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Sosyal Bilimler",
-            "Limit Yayınları TYT Sosyal",
-            "Bilgiseli Sosyal Bilimler Soru Bankası",
-            "Endemik Sosyal Bilimler",
-            "Karekök Sosyal Bilimler (standart seviye)"
-        ]
-    },
-    "Coğrafya": {
-        "Kolay": [
-            "Karekök 0 Sosyal Bilimler",
-            "3D TYT Sosyal Bilimler Soru Bankası",
-            "Tonguç TYT Sosyal Konu Anlatımlı",
-            "Palme Sosyal Bilimler",
-            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Sosyal Bilimler",
-            "Limit Yayınları TYT Sosyal",
-            "Bilgiseli Sosyal Bilimler Soru Bankası",
-            "Endemik Sosyal Bilimler",
-            "Karekök Sosyal Bilimler (standart seviye)"
-        ]
-    },
-    "Felsefe": {
-        "Kolay": [
-            "Karekök 0 Sosyal Bilimler",
-            "3D TYT Sosyal Bilimler Soru Bankası",
-            "Tonguç TYT Sosyal Konu Anlatımlı",
-            "Palme Sosyal Bilimler",
-            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Sosyal Bilimler",
-            "Limit Yayınları TYT Sosyal",
-            "Bilgiseli Sosyal Bilimler Soru Bankası",
-            "Endemik Sosyal Bilimler",
-            "Karekök Sosyal Bilimler (standart seviye)"
-        ]
-    },
-    "Din Kültürü": {
-        "Kolay": [
-            "Karekök 0 Sosyal Bilimler",
-            "3D TYT Sosyal Bilimler Soru Bankası",
-            "Tonguç TYT Sosyal Konu Anlatımlı",
-            "Palme Sosyal Bilimler",
-            "Hız ve Renk TYT Sosyal Bilimler (Kolay Seviye)"
-        ],
-        "Orta": [
-            "ÜçDörtBeş TYT Sosyal Bilimler",
-            "Limit Yayınları TYT Sosyal",
-            "Bilgiseli Sosyal Bilimler Soru Bankası",
-            "Endemik Sosyal Bilimler",
-            "Karekök Sosyal Bilimler (standart seviye)"
-        ]
-    }
-}
-
-# YouTube kanalları ve genel öneriler
-YOUTUBE_KANALLARI = {
-    "Türkçe": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Matematik Sevdası",
-        "Öğretmen Akademisi"
-    ],
-    "Matematik": [
-        "Tonguç Akademi",
-        "Matematik Sevdası",
-        "Benim Hocam",
-        "Ders Vakti",
-        "Matematik Dünyası"
-    ],
-    "Geometri": [
-        "Tonguç Akademi",
-        "Matematik Sevdası",
-        "Benim Hocam",
-        "Ders Vakti",
-        "Geometri Dünyası"
-    ],
-    "Fizik": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Fizik Dünyası",
-        "Fen Bilimleri Akademisi"
-    ],
-    "Kimya": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Kimya Dünyası",
-        "Fen Bilimleri Akademisi"
-    ],
-    "Biyoloji": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Biyoloji Dünyası",
-        "Fen Bilimleri Akademisi"
-    ],
-    "Tarih": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Tarih Dünyası",
-        "Sosyal Bilimler Akademisi"
-    ],
-    "Coğrafya": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Coğrafya Dünyası",
-        "Sosyal Bilimler Akademisi"
-    ],
-    "Felsefe": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Felsefe Dünyası",
-        "Sosyal Bilimler Akademisi"
-    ],
-    "Din Kültürü": [
-        "Benim Hocam",
-        "Tonguç Akademi",
-        "Ders Vakti",
-        "Din Kültürü Akademisi",
-        "Sosyal Bilimler Akademisi"
-    ]
-}
-
-def hesapla_ders_basari_orani(analiz_sonucu):
-    """Her ders için başarı oranını hesapla"""
-    ders_analizi = {}
-    
-    for konu_adi, bilgi in analiz_sonucu.items():
-        ders = bilgi['ders']
-        if ders not in ders_analizi:
-            ders_analizi[ders] = {
-                'toplam_puan': 0,
-                'konu_sayisi': 0,
-                'ortalama_puan': 0
-            }
-        
-        ders_analizi[ders]['toplam_puan'] += bilgi['oncelik_puani']
-        ders_analizi[ders]['konu_sayisi'] += 1
-    
-    # Ortalama hesapla ve seviye belirle
-    for ders in ders_analizi:
-        ortalama = ders_analizi[ders]['toplam_puan'] / ders_analizi[ders]['konu_sayisi']
-        ders_analizi[ders]['ortalama_puan'] = ortalama
-        
-        # Seviye belirleme
-        if ortalama >= 5:
-            ders_analizi[ders]['seviye'] = 'Orta'
-        else:
-            ders_analizi[ders]['seviye'] = 'Kolay'
-    
-    return ders_analizi
-
-def youtube_video_ara(ders_adi, konu_adi):
-    """YouTube'dan video ara"""
-    try:
-        # YouTube API yerine genel öneriler
-        return [
-            f"TYT {ders_adi} {konu_adi} Konu Anlatımı",
-            f"TYT {ders_adi} {konu_adi} Soru Çözümü",
-            f"TYT {ders_adi} {konu_adi} Test Çözümü",
-            f"{ders_adi} {konu_adi} Örnekler",
-            f"{ders_adi} {konu_adi} Pratik Yöntemler"
-        ]
-    except Exception:
-        return [f"TYT {ders_adi} {konu_adi} videolarını YouTube'da arayın"]
-
-# TAB4 İÇERİĞİ
+# YENİ TAB4: Kaynaklar
 with tab4:
     st.header("📚 Akıllı Kaynak Önerileri")
     
@@ -1046,119 +813,178 @@ with tab4:
         st.subheader("🎯 Genel Durum Analizi")
         col1, col2, col3 = st.columns(3)
         
-        # Hata düzeltmesi: expanded değerini bool'a çevir
-        zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] >= 5]
-        iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] < 5]
+        zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] >= 7]
+        iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] < 4]
         ortalama_risk = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari) if ders_basari else 0
         
-        col1.metric("Zayıf Dersler", len(zayif_dersler))
-        col2.metric("İyi Dersler", len(iyi_dersler))
+        col1.metric("Zor Seviye Dersler", len(zayif_dersler))
+        col2.metric("Kolay Seviye Dersler", len(iyi_dersler))
         col3.metric("Genel Risk Skoru", f"{ortalama_risk:.1f}")
         
         st.markdown("---")
         
         # Ders bazlı öneriler
         for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1]['ortalama_puan'], reverse=True):
-            # Hata düzeltmesi: expanded parametresi bool olmalı
-            expanded_value = bool(bilgi['ortalama_puan'] >= 5)
-            
             with st.expander(
-                f"📖 {ders} - Risk Skoru: {bilgi['ortalama_puan']:.1f} "
-                f"({'🔴 Acil' if bilgi['ortalama_puan'] >= 5 else '🟡 Orta' if bilgi['ortalama_puan'] >= 3 else '🟢 İyi'})",
-                expanded=expanded_value
+                f"📖 {ders} - Seviye: {bilgi['seviye']} (Risk: {bilgi['ortalama_puan']:.1f})",
+                expanded=bilgi['ortalama_puan'] >= 7
             ):
+                # Kaynak önerileri
+                st.subheader("📚 Kaynak Önerileri")
                 
-                # Kitap önerileri
-                st.subheader(f"📚 {ders} için Kitap Önerileri")
+                if ders == "Türkçe":
+                    if bilgi['seviye'] == "Kolay":
+                        st.info("""
+                        **Türkçe (Kolay Seviye):**
+                        - Hız ve Renk Paragraf
+                        - Bilgi Sarmal Dil Bilgisi
+                        - 3D Türkçe Soru Bankası
+                        """)
+                    elif bilgi['seviye'] == "Orta":
+                        st.info("""
+                        **Türkçe (Orta Seviye):**
+                        - 345 Sıfır Risk Paragraf
+                        - Limit Yayınları TYT Türkçe
+                        - ÜçDörtBeş TYT Paragraf Soru Bankası
+                        """)
+                    else:  # Zor seviye
+                        st.info("""
+                        **Türkçe (Zor Seviye):**
+                        - Apotemi Paragraf
+                        - Limit Kronometre Paragraf
+                        - Bilgi Sarmal TYT Türkçe
+                        """)
                 
-                seviye = bilgi['seviye']
-                if ders in KITAP_ONERILERI:
-                    kitaplar = KITAP_ONERILERI[ders][seviye]
+                elif ders in ["Matematik", "Geometri"]:
+                    if bilgi['seviye'] == "Kolay":
+                        st.info("""
+                        **Matematik (Kolay Seviye):**
+                        - Alt Yapı Matematik
+                        - Yarı Çap Yayınları
+                        - Karekök 0 Matematik
+                        """)
+                    elif bilgi['seviye'] == "Orta":
+                        st.info("""
+                        **Matematik (Orta Seviye):**
+                        - ENS Matematik
+                        - Acil Matematik
+                        - Tümler Yayınları
+                        - Merkez Matematik
+                        """)
+                    else:  # Zor seviye
+                        st.info("""
+                        **Matematik (Zor Seviye):**
+                        - Bilgi Sarmal Matematik
+                        - Orijinal Yayınları
+                        - Acil Matematik (Zor Seviye)
+                        - Apotemi Matematik
+                        """)
+                
+                elif ders in ["Tarih", "Coğrafya", "Felsefe", "Din Kültürü"]:
+                    if bilgi['seviye'] == "Kolay":
+                        st.info("""
+                        **Sosyal Bilimler (Kolay Seviye):**
+                        - Benim Hocam Yayınları
+                        - Hız ve Renk Sosyal Bilimler
+                        - Karekök 0 Sosyal Bilimler
+                        """)
+                    elif bilgi['seviye'] == "Orta":
+                        st.info("""
+                        **Sosyal Bilimler (Orta Seviye):**
+                        - Palme Yayınları
+                        - Bilgi Sarmal Sosyal Bilimler
+                        - 345 TYT Sosyal Bilimler
+                        - Paraf Yayınları
+                        """)
+                    else:  # Zor seviye
+                        st.info("""
+                        **Sosyal Bilimler (Zor Seviye):**
+                        - Karekök Sosyal Bilimler
+                        - Aydın Yayınları
+                        - Pegem Akademi
+                        - Limit Yayınları
+                        - 3D Sosyal Bilimler
+                        - Nitelik Yayınları (Ters Yüz)
+                        - Apotemi Sosyal Bilimler
+                        """)
+                
+                elif ders == "Fizik":
+                    if bilgi['seviye'] == "Kolay":
+                        st.info("""
+                        **Fizik (Kolay Seviye):**
+                        - Kafa Dengi Fizik
+                        - Paraf Fizik
+                        - Aktif Öğrenme Fizik
+                        """)
+                    elif bilgi['seviye'] == "Orta":
+                        st.info("""
+                        **Fizik (Orta Seviye):**
+                        - 345 Fizik
+                        - Kafa Dengi Fizik (Orta)
+                        - Nihat Bilgin Fizik
+                        """)
+                    else:  # Zor seviye
+                        st.info("""
+                        **Fizik (Zor Seviye):**
+                        - 3D Fizik
+                        - Aromat Fizik
+                        - Aydın Yayınları Fizik
+                        """)
+                
+                elif ders == "Kimya":
+                    if bilgi['seviye'] == "Orta":
+                        st.info("""
+                        **Kimya (Orta Seviye):**
+                        - Aydın Yayınları Kimya
+                        - 345 Kimya
+                        - Palme Kimya
+                        """)
+                    else:  # Zor seviye
+                        st.info("""
+                        **Kimya (Zor Seviye):**
+                        - 3D Kimya
+                        - Apotemi Kimya
+                        - Limit Kimya
+                        """)
+                
+                elif ders == "Biyoloji":
+                    if bilgi['seviye'] == "Orta":
+                        st.info("""
+                        **Biyoloji (Orta Seviye):**
+                        - Paraf Biyoloji
+                        - Biyotik Yayınları
+                        - Palme Biyoloji
+                        """)
+                    else:  # Zor seviye
+                        st.info("""
+                        **Biyoloji (Zor Seviye):**
+                        - Apotemi Biyoloji
+                        - 3D Biyoloji
+                        - Limit Biyoloji
+                        """)
+                
+                # YouTube önerileri
+                st.subheader("🎥 YouTube İçerik Önerileri")
+                
+                # Dersin en riskli 2 konusunu bul
+                ders_konulari = [(konu, bilgi) for konu, bilgi in st.session_state.analiz_sonucu.items() 
+                                if bilgi['ders'] == ders]
+                
+                if ders_konulari:
+                    # Öncelik puanına göre sırala (yüksek puan daha riskli)
+                    ders_konulari.sort(key=lambda x: x[1]['oncelik_puani'], reverse=True)
                     
-                    cols = st.columns(2)
-                    for i, kitap in enumerate(kitaplar):
-                        with cols[i % 2]:
-                            st.info(f"📖 {kitap}")
-                
-                # YouTube kanalları
-                st.subheader(f"🎥 {ders} için YouTube Kanalları")
-                if ders in YOUTUBE_KANALLARI:
-                    kanallar = YOUTUBE_KANALLARI[ders]
-                    
-                    cols = st.columns(3)
-                    for i, kanal in enumerate(kanallar):
-                        with cols[i % 3]:
-                            st.success(f"📺 {kanal}")
-                
-                # Bu dersteki zayıf konular
-                st.subheader(f"🔍 {ders} - Zayıf Konular")
-                ders_zayif_konular = [
-                    (konu_adi, konu_bilgi) for konu_adi, konu_bilgi in st.session_state.analiz_sonucu.items()
-                    if konu_bilgi['ders'] == ders and konu_bilgi['oncelik_puani'] >= 3
-                ]
-                
-                if ders_zayif_konular:
-                    sorted_zayif = sorted(ders_zayif_konular, key=lambda x: x[1]['oncelik_puani'], reverse=True)
-                    
-                    for konu_adi, konu_bilgi in sorted_zayif[:5]:  # En zayıf 5 konu
-                        konu_adi_clean = konu_adi.split(' - ')[1]
+                    for konu_adi, konu_bilgi in ders_konulari[:2]:
+                        konu = konu_adi.split(" - ")[1]
+                        st.write(f"**{konu}** için öneriler:")
                         
-                        with st.container():
-                            st.write(f"**{konu_adi_clean}** (Risk: {konu_bilgi['oncelik_puani']:.1f})")
-                            
-                            # Video önerileri
-                            video_onerileri = youtube_video_ara(ders, konu_adi_clean)
-                            
-                            cols = st.columns(2)
-                            with cols[0]:
-                                st.write("🎬 **Video Önerileri:**")
-                                for video in video_onerileri[:3]:
-                                    st.write(f"• {video}")
-                            
-                            with cols[1]:
-                                st.write("📝 **Çalışma Önerileri:**")
-                                if konu_bilgi['zorluk'] == 'Zor':
-                                    st.write("• Temel kavramları tekrar edin")
-                                    st.write("• Bol örnek çözün")
-                                    st.write("• Günde 30 dk ayırın")
-                                elif konu_bilgi['zorluk'] == 'Orta':
-                                    st.write("• Soru bankası çözün")
-                                    st.write("• Testler yapın")
-                                    st.write("• Günde 20 dk ayırın")
-                                else:
-                                    st.write("• Kısa tekrarlar yapın")
-                                    st.write("• Formülleri ezberleyin")
-                                    st.write("• Günde 10 dk ayırın")
-                            
-                            st.markdown("---")
+                        # YouTube önerilerini al
+                        video_onerileri = youtube_video_ara(ders, konu)
+                        
+                        for video in video_onerileri[:3]:
+                            st.markdown(f"- {video}")
                 else:
-                    st.info(f"🎉 {ders} dersinde kritik zayıflık yok!")
-        
-        # Genel öneriler
-        st.markdown("---")
-        st.subheader("💡 Genel Strateji Önerileri")
-        
-        risk_skoru = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari)
-        
-        if risk_skoru >= 5:
-            st.error("🚨 **Acil Durum Stratejisi:**")
-            st.write("• Temel konulara odaklanın")
-            st.write("• Günde en az 6 saat çalışın")
-            st.write("• Kolay kitaplardan başlayın")
-            st.write("• YouTube'dan konu anlatımları izleyin")
-        elif risk_skoru >= 3:
-            st.warning("⚠️ **Orta Seviye Strateji:**")
-            st.write("• Zayıf konulara ağırlık verin")
-            st.write("• Günde 4-5 saat çalışın")
-            st.write("• Soru bankası çözmeye odaklanın")
-            st.write("• Düzenli testler yapın")
-        else:
-            st.success("✅ **Pekiştirme Stratejisi:**")
-            st.write("• Tüm konuları dengeli çalışın")
-            st.write("• Günde 3-4 saat çalışın")
-            st.write("• Deneme sınavlarına odaklanın")
-            st.write("• Hızınızı artırmaya çalışın")
-    
+                    st.info("Bu ders için analiz edilmiş konu bulunamadı.")
     else:
         st.warning("⚠️ Kaynak önerileri için önce analiz yapın!")
 
