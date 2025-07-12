@@ -1060,7 +1060,7 @@ with tab4:
                 else:
                     st.info("Bu ders için analiz edilmiş konu bulunamadı.")
                 else:
-                st.warning("⚠️ Kaynak önerileri için önce analiz yapın!")
+                    st.warning("⚠️ Kaynak önerileri için önce analiz yapın!")
 
 # Yeni tab: Öğrenci Özeti
 with tab5:
