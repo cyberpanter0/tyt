@@ -23,7 +23,7 @@ def init_groq_client():
 client = init_groq_client()
 
 # Güncellenmiş Konu verileri (yeni soru sayılarıyla)
-KONU_VERILERI = {
+KONU_VERILERI ={
   "Türkçe": {
     "Paragraf": { "zorluk": "Zor", "ortalama_soru": 24, "kategori": "Dil" },
     "Cümlede Anlam": { "zorluk": "Orta", "ortalama_soru": 5, "kategori": "Dil" },
@@ -590,17 +590,17 @@ with tab1:
                     st.session_state.veriler[ders] = {}
                 
                 cols = st.columns(3)
-                    for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
-                        col_idx = i % 3
+                for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
+                    col_idx = i % 3
                         
-                        with cols[col_idx]:
-                            st.markdown(f"**{konu}**")
-                            st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
+                    with cols[col_idx]:
+                        st.markdown(f"**{konu}**")
+                        st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
                             
-                            if konu not in st.session_state.veriler[ders]:
-                                st.session_state.veriler[ders][konu] = {
-                                    'dogru': 0, 'yanlis': 0, 'bos': 0, 'gercek_soru': bilgi['ortalama_soru']
-                                }
+                        if konu not in st.session_state.veriler[ders]:
+                            st.session_state.veriler[ders][konu] = {
+                                'dogru': 0, 'yanlis': 0, 'bos': 0, 'gercek_soru': bilgi['ortalama_soru']
+                            }
                             
                         # Gerçek soru sayısı
                         gercek_soru = st.number_input(
