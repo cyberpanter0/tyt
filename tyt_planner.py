@@ -590,18 +590,18 @@ with tab1:
                     st.session_state.veriler[ders] = {}
                 
                 cols = st.columns(3)
-                for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
-                    col_idx = i % 3
-                    
-                    with cols[col_idx]:
-                        st.markdown(f"**{konu}**")
-                        st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
+                    for i, (konu, bilgi) in enumerate(KONU_VERILERI[ders].items()):
+                        col_idx = i % 3
                         
-                        if konu not in st.session_state.veriler[ders]:
-                            st.session_state.veriler[ders][konu] = {
-                                'dogru': 0, 'yanlis': 0, 'bos': 0, 'gercek_soru': bilgi['ortalama_soru']
-                            }
-                        
+                        with cols[col_idx]:
+                            st.markdown(f"**{konu}**")
+                            st.caption(f"Zorluk: {bilgi['zorluk']} | Ortalama: {bilgi['ortalama_soru']} soru")
+                            
+                            if konu not in st.session_state.veriler[ders]:
+                                st.session_state.veriler[ders][konu] = {
+                                    'dogru': 0, 'yanlis': 0, 'bos': 0, 'gercek_soru': bilgi['ortalama_soru']
+                                }
+                            
                         # Gerçek soru sayısı
                         gercek_soru = st.number_input(
                             f"Denemede Bu Konudan Kaç Soru Vardı?",
