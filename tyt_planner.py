@@ -7,6 +7,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from groq import Groq
+import numpy as np  # log1p için eklendi
 
 # Groq AI Client
 @st.cache_resource
@@ -203,12 +204,11 @@ def hesapla_oncelik_puani(dogru, yanlis, bos, zorluk, ortalama_soru):
     """Geliştirilmiş öncelik puanı hesapla"""
     zorluk_katsayisi = ZORLUK_KATSAYILARI[zorluk]
     
-    # Temel puan
-    puan = (yanlis * 2) + (bos * 1.5) + (zorluk_katsayisi * 3)
+    # Yeni formül: Yanlış ve boşları birlikte değerlendir
+    puan = ((yanlis + bos) * 1.2) + (zorluk_katsayisi * 3)
     
-    # Konu önem ağırlığı
-    toplam_ortalama_soru = sum(sum(konu['ortalama_soru'] for konu in ders.values()) for ders in KONU_VERILERI.values())
-    onem_agirligi = (ortalama_soru / toplam_ortalama_soru) * 10
+    # Konu önem ağırlığı (logaritmik ölçek)
+    onem_agirligi = np.log1p(ortalama_soru) * 3
     
     # Final puan
     oncelik_puani = puan * onem_agirligi
@@ -592,6 +592,43 @@ with tab2:
                         title='En Öncelikli 20 Konu')
             fig.update_layout(height=600)
             st.plotly_chart(fig, use_container_width=True)
+            
+            # Risk haritası (Heatmap)
+            st.subheader("🔥 Konu Bazlı Risk Haritası")
+            
+            # Heatmap için veri hazırlama
+            heatmap_data = []
+            for konu, bilgi in analiz_sonucu.items():
+                heatmap_data.append({
+                    'Ders': bilgi['ders'],
+                    'Konu': bilgi['konu'],
+                    'Öncelik Puanı': bilgi['oncelik_puani']
+                })
+            
+            df_heatmap = pd.DataFrame(heatmap_data)
+            
+            # Pivot tablo oluşturma
+            pivot_df = df_heatmap.pivot_table(
+                index='Ders', 
+                columns='Konu', 
+                values='Öncelik Puanı', 
+                aggfunc='first'
+            ).fillna(0)
+            
+            # Heatmap oluşturma
+            fig = px.imshow(
+                pivot_df,
+                labels=dict(x="Konu", y="Ders", color="Risk Puanı"),
+                color_continuous_scale='RdYlGn_r',  # Kırmızı-Yeşil renk skalası (ters)
+                title='Ders ve Konulara Göre Risk Dağılımı'
+            )
+            fig.update_layout(
+                height=700,
+                xaxis_title="Konular",
+                yaxis_title="Dersler",
+                coloraxis_colorbar=dict(title="Risk Puanı")
+            )
+            st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Analiz için veri bulunamadı!")
 
@@ -615,7 +652,19 @@ with tab3:
                 program_df = pd.DataFrame(program)
                 st.session_state.program_df = program_df
                 
-                st.dataframe(program_df, use_container_width=True)
+                # Günlere göre gruplanmış tablo
+                st.subheader("📅 Günlere Göre Program")
+                grouped = program_df.groupby(['Gün', 'Tarih', 'Ders'])['Konu'].apply(list).reset_index()
+                grouped['Konular'] = grouped['Konu'].apply(lambda x: ", ".join(x))
+                
+                pivot_df = grouped.pivot_table(
+                    index='Ders',
+                    columns=['Gün', 'Tarih'],
+                    values='Konular',
+                    aggfunc='first'
+                ).fillna('')
+                
+                st.dataframe(pivot_df, use_container_width=True)
                 
                 # İlerleme takibi
                 st.subheader("📊 İlerleme Takibi")
@@ -923,17 +972,9 @@ with tab4:
         st.subheader("🎯 Genel Durum Analizi")
         col1, col2, col3 = st.columns(3)
         
-        with col1:
-            zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] >= 5]
-            st.metric("Zayıf Dersler", len(zayif_dersler))
-        
-        with col2:
-            iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] < 5]
-            st.metric("İyi Dersler", len(iyi_dersler))
-        
-        with col3:
-            ortalama_risk = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari)
-            st.metric("Genel Risk Skoru", f"{ortalama_risk:.1f}")
+        col1.metric("Zayıf Dersler", len([d for d, b in ders_basari.items() if b['ortalama_puan'] >= 5]))
+        col2.metric("İyi Dersler", len([d for d, b in ders_basari.items() if b['ortalama_puan'] < 5]))
+        col3.metric("Genel Risk", f"{sum(b['ortalama_puan'] for b in ders_basari.values()) / len(ders_basari):.1f}")
         
         st.markdown("---")
         
@@ -1011,7 +1052,7 @@ with tab4:
         st.markdown("---")
         st.subheader("💡 Genel Strateji Önerileri")
         
-        risk_skoru = ortalama_risk
+        risk_skoru = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari)
         
         if risk_skoru >= 5:
             st.error("🚨 **Acil Durum Stratejisi:**")
