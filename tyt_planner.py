@@ -22,7 +22,7 @@ def init_groq_client():
 client = init_groq_client()
 
 # Güncellenmiş Konu verileri (yeni soru sayılarıyla)
-KONU_VERILERI ={
+KITAP_ONERILERI ={
     "Türkçe": {
         "Paragraf": {"zorluk": "Zor", "ortalama_soru": 24, "kategori": "Dil"},
         "Cümlede Anlam": {"zorluk": "Orta", "ortalama_soru": 5, "kategori": "Dil"},
