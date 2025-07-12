@@ -8,6 +8,167 @@ from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from groq import Groq
 
+# Liquid Glass CSS Stilleri
+st.markdown("""
+<style>
+:root {
+    --primary: rgba(15, 23, 42, 0.85);
+    --secondary: rgba(30, 41, 59, 0.75);
+    --accent: rgba(96, 165, 250, 0.7);
+    --text: #f1f5f9;
+    --light: rgba(226, 232, 240, 0.9);
+    --shadow: 0 8px 32px rgba(2, 8, 32, 0.3);
+    --blur: blur(12px);
+    --border: 1px solid rgba(255, 255, 255, 0.1);
+    --radius: 16px;
+}
+
+* {
+    font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+}
+
+html, body, [class*="css"] {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* Liquid Glass Container */
+.glass-container {
+    background: var(--primary);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border-radius: var(--radius);
+    border: var(--border);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+/* Başlık Stilleri */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--light) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em !important;
+}
+
+h1 {
+    font-size: 2.8rem !important;
+    text-shadow: 0 2px 10px rgba(96, 165, 250, 0.3);
+}
+
+/* Sidebar Stili */
+[data-testid="stSidebar"] {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%) !important;
+    backdrop-filter: var(--blur);
+    border-right: var(--border);
+}
+
+/* Tab Stilleri */
+[data-testid="stTabs"] > div > div {
+    background: transparent !important;
+}
+
+[role="tablist"] button {
+    background: var(--secondary) !important;
+    color: var(--light) !important;
+    border: var(--border) !important;
+    backdrop-filter: var(--blur);
+    margin: 0 4px !important;
+    border-radius: 12px !important;
+}
+
+[role="tablist"] button[aria-selected="true"] {
+    background: var(--accent) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Buton Stilleri */
+button {
+    background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 1.5rem !important;
+    transition: all 0.3s ease !important;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Giriş Alanları */
+.stTextInput input, .stNumberInput input, .stSelectbox select, .stDateInput input {
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: var(--blur);
+    border: var(--border) !important;
+    border-radius: 12px !important;
+    color: var(--light) !important;
+    padding: 0.75rem 1rem !important;
+}
+
+/* Grafik Stilleri */
+.plot-container {
+    background: var(--secondary);
+    backdrop-filter: var(--blur);
+    border-radius: var(--radius);
+    border: var(--border);
+    padding: 1rem;
+}
+
+/* Expandable Alanlar */
+[data-testid="stExpander"] {
+    background: var(--secondary) !important;
+    backdrop-filter: var(--blur);
+    border: var(--border) !important;
+    border-radius: var(--radius) !important;
+}
+
+/* Tablo Stilleri */
+[data-testid="stTable"] {
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: var(--blur);
+    border: var(--border) !important;
+    border-radius: var(--radius) !important;
+}
+
+/* Özel Glass Container Sınıfı */
+.st-emotion-cache-1y4p8pa {
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* Ayırıcı çizgi */
+hr {
+    border: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.5), transparent);
+    margin: 2rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Streamlit arayüzü
+st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
+
+# Uygulama başlığı ve arayüz
+st.markdown("""
+<div class="glass-container">
+    <h1>🎯 TYT Hazırlık Uygulaması</h1>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("<hr>", unsafe_allow_html=True)
+
 # Groq AI Client
 @st.cache_resource
 def init_groq_client():
@@ -438,18 +599,21 @@ def hesapla_performans_ozeti(veriler):
     
     return ozet, ders_bazli
 
-# Streamlit arayüzü
-st.set_page_config(page_title="TYT Hazırlık Uygulaması", layout="wide")
-
-st.title("🎯 TYT Hazırlık Uygulaması")
-st.markdown("---")
-
-# Sidebar - AI Koç
+# Liquid Glass sidebar
 with st.sidebar:
-    st.header("🤖 AI Koçun")
+    st.markdown("""
+    <div class="glass-container" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+        <h2>🤖 AI Koçun</h2>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Çalışma parametreleri
-    st.subheader("📚 Çalışma Ayarları")
+    st.markdown("""
+    <div class="glass-container" style="padding: 1.5rem;">
+        <h3>📚 Çalışma Ayarları</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     gunluk_saat = st.slider("Günlük Çalışma Saati", 1, 12, 4)
     gun_sayisi = st.number_input("Kaç Gün Çalışacaksınız?", min_value=1, max_value=365, value=30)
     
@@ -459,17 +623,21 @@ with st.sidebar:
                 with st.spinner("AI senin için özel strateji hazırlıyor..."):
                     suggestion = get_ai_suggestion(st.session_state['analiz_sonucu'], gunluk_saat, gun_sayisi)
                     st.success("🎯 **Senin İçin Özel Strateji:**")
-                    st.info(suggestion)
+                    st.markdown(f'<div class="glass-container">{suggestion}</div>', unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Önce veri giriş yapın!")
     else:
         st.warning("AI hizmeti şu anda kullanılamıyor.")
 
-# Ana içerik - Yeni tab ekledik
+# Liquid Glass tab'lar
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Veri Giriş", "📈 Analiz", "📅 Program", "📚 Kaynaklar", "📝 Öğrenci Özeti"])
 
+# Yardımcı fonksiyon: Glass container oluştur
+def glass(content):
+    return f'<div class="glass-container">{content}</div>'
+
 with tab1:
-    st.header("Deneme Sonuçlarını Girin")
+    st.markdown(glass("<h2>Deneme Sonuçlarını Girin</h2>"), unsafe_allow_html=True)
     
     if 'veriler' not in st.session_state:
         st.session_state.veriler = {}
@@ -554,7 +722,7 @@ with tab1:
                             st.error(f"❌ Toplam: {toplam}/{gercek_soru}")
 
 with tab2:
-    st.header("📊 Analiz Sonuçları")
+    st.markdown(glass("<h2>📊 Analiz Sonuçları</h2>"), unsafe_allow_html=True)
     
     if st.button("🔍 Analiz Et"):
         analiz_sonucu = analiz_et(st.session_state.veriler)
@@ -566,12 +734,12 @@ with tab2:
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("🔴 Öncelikli Konular")
+                st.markdown(glass("<h3>🔴 Öncelikli Konular</h3>"), unsafe_allow_html=True)
                 for i, (konu, bilgi) in enumerate(sorted_analiz[:10]):
                     st.error(f"{i+1}. {konu} (Puan: {bilgi['oncelik_puani']:.1f})")
             
             with col2:
-                st.subheader("🟢 İyi Durumda Olan Konular")
+                st.markdown(glass("<h3>🟢 İyi Durumda Olan Konular</h3>"), unsafe_allow_html=True)
                 for i, (konu, bilgi) in enumerate(sorted_analiz[-10:]):
                     st.success(f"{i+1}. {konu} (Puan: {bilgi['oncelik_puani']:.1f})")
             
@@ -585,18 +753,19 @@ with tab2:
                 for konu, bilgi in analiz_sonucu.items()
             ])
             
+            st.markdown(glass("<h3>📊 Öncelik Puanı Dağılımı</h3>"), unsafe_allow_html=True)
             fig = px.bar(df_analiz.head(20), 
                         x='Öncelik Puanı', 
                         y='Konu',
                         color='Ders',
                         title='En Öncelikli 20 Konu')
-            fig.update_layout(height=600)
+            fig.update_layout(height=600, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("Analiz için veri bulunamadı!")
 
 with tab3:
-    st.header("📅 Çalışma Programı")
+    st.markdown(glass("<h2>📅 Çalışma Programı</h2>"), unsafe_allow_html=True)
     
     if 'analiz_sonucu' in st.session_state:
         col1, col2 = st.columns(2)
@@ -615,10 +784,11 @@ with tab3:
                 program_df = pd.DataFrame(program)
                 st.session_state.program_df = program_df
                 
+                st.markdown(glass("<h3>📅 Haftalık Çalışma Programı</h3>"), unsafe_allow_html=True)
                 st.dataframe(program_df, use_container_width=True)
                 
                 # İlerleme takibi
-                st.subheader("📊 İlerleme Takibi")
+                st.markdown(glass("<h3>📊 İlerleme Takibi</h3>"), unsafe_allow_html=True)
                 ders_ilerleme = program_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
                 ders_ilerleme['Tamamlanma Oranı'] = ders_ilerleme['Konu Sayısı'] / len(program_df) * 100
                 
@@ -627,6 +797,7 @@ with tab3:
                             values='Konu Sayısı',
                             title='Derslere Göre Konu Dağılımı',
                             hole=0.3)
+                fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Önce analiz yapın!")
@@ -914,13 +1085,13 @@ def youtube_video_ara(ders_adi, konu_adi):
 
 # TAB4 İÇERİĞİ
 with tab4:
-    st.header("📚 Akıllı Kaynak Önerileri")
+    st.markdown(glass("<h2>📚 Akıllı Kaynak Önerileri</h2>"), unsafe_allow_html=True)
     
     if 'analiz_sonucu' in st.session_state:
         ders_basari = hesapla_ders_basari_orani(st.session_state.analiz_sonucu)
         
         # Genel durum
-        st.subheader("🎯 Genel Durum Analizi")
+        st.markdown(glass("<h3>🎯 Genel Durum Analizi</h3>"), unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         
         with col1:
@@ -935,14 +1106,14 @@ with tab4:
             ortalama_risk = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari)
             st.metric("Genel Risk Skoru", f"{ortalama_risk:.1f}")
         
-        st.markdown("---")
+        st.markdown("<hr>", unsafe_allow_html=True)
         
         # Ders bazlı öneriler
         for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1]['ortalama_puan'], reverse=True):
             with st.expander(f"📖 {ders} - Risk Skoru: {bilgi['ortalama_puan']:.1f} ({'🔴 Acil' if bilgi['ortalama_puan'] >= 5 else '🟡 Orta' if bilgi['ortalama_puan'] >= 3 else '🟢 İyi'})", expanded=bilgi['ortalama_puan'] >= 5):
                 
                 # Kitap önerileri
-                st.subheader(f"📚 {ders} için Kitap Önerileri")
+                st.markdown(glass(f"<h4>📚 {ders} için Kitap Önerileri</h4>"), unsafe_allow_html=True)
                 
                 seviye = bilgi['seviye']
                 if ders in KITAP_ONERILERI:
@@ -954,7 +1125,7 @@ with tab4:
                             st.info(f"📖 {kitap}")
                 
                 # YouTube kanalları
-                st.subheader(f"🎥 {ders} için YouTube Kanalları")
+                st.markdown(glass(f"<h4>🎥 {ders} için YouTube Kanalları</h4>"), unsafe_allow_html=True)
                 if ders in YOUTUBE_KANALLARI:
                     kanallar = YOUTUBE_KANALLARI[ders]
                     
@@ -964,7 +1135,7 @@ with tab4:
                             st.success(f"📺 {kanal}")
                 
                 # Bu dersteki zayıf konular
-                st.subheader(f"🔍 {ders} - Zayıf Konular")
+                st.markdown(glass(f"<h4>🔍 {ders} - Zayıf Konular</h4>"), unsafe_allow_html=True)
                 ders_zayif_konular = [
                     (konu_adi, konu_bilgi) for konu_adi, konu_bilgi in st.session_state.analiz_sonucu.items()
                     if konu_bilgi['ders'] == ders and konu_bilgi['oncelik_puani'] >= 3
@@ -977,7 +1148,7 @@ with tab4:
                         konu_adi_clean = konu_adi.split(' - ')[1]
                         
                         with st.container():
-                            st.write(f"**{konu_adi_clean}** (Risk: {konu_bilgi['oncelik_puani']:.1f})")
+                            st.markdown(glass(f"<h5>{konu_adi_clean} (Risk: {konu_bilgi['oncelik_puani']:.1f})</h5>"), unsafe_allow_html=True)
                             
                             # Video önerileri
                             video_onerileri = youtube_video_ara(ders, konu_adi_clean)
@@ -1003,13 +1174,13 @@ with tab4:
                                     st.write("• Formülleri ezberleyin")
                                     st.write("• Günde 10 dk ayırın")
                             
-                            st.markdown("---")
+                            st.markdown("<hr style='margin: 1rem 0;'>", unsafe_allow_html=True)
                 else:
                     st.info(f"🎉 {ders} dersinde kritik zayıflık yok!")
         
         # Genel öneriler
-        st.markdown("---")
-        st.subheader("💡 Genel Strateji Önerileri")
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(glass("<h3>💡 Genel Strateji Önerileri</h3>"), unsafe_allow_html=True)
         
         risk_skoru = ortalama_risk
         
@@ -1037,14 +1208,14 @@ with tab4:
 
 # Yeni tab: Öğrenci Özeti
 with tab5:
-    st.header("📝 Öğrenci Genel Özeti")
+    st.markdown(glass("<h2>📝 Öğrenci Genel Özeti</h2>"), unsafe_allow_html=True)
     
     if 'veriler' in st.session_state and st.session_state.veriler:
         # Performans özetini hesapla
         genel_ozet, ders_bazli_ozet = hesapla_performans_ozeti(st.session_state.veriler)
         
         # Genel istatistikler
-        st.subheader("📊 Genel İstatistikler")
+        st.markdown(glass("<h3>📊 Genel İstatistikler</h3>"), unsafe_allow_html=True)
         col1, col2, col3, col4 = st.columns(4)
         
         col1.metric("Toplam Soru", genel_ozet['Toplam Soru'])
@@ -1058,13 +1229,13 @@ with tab5:
         col3.metric("Kalan Net", f"{genel_ozet['Kalan Net']:.2f}")
         
         # Başarı oranı grafiği
-        st.subheader("📈 Başarı Oranı")
+        st.markdown(glass("<h3>📈 Başarı Oranı</h3>"), unsafe_allow_html=True)
         basari_orani = genel_ozet['Başarı Oranı']
         st.progress(basari_orani / 100)
         st.markdown(f"**{basari_orani:.2f}%** Başarı Oranı")
         
         # Ders bazlı performans
-        st.subheader("📚 Ders Bazlı Performans")
+        st.markdown(glass("<h3>📚 Ders Bazlı Performans</h3>"), unsafe_allow_html=True)
         ders_performans = []
         for ders, bilgi in ders_bazli_ozet.items():
             ders_performans.append({
@@ -1084,14 +1255,15 @@ with tab5:
                     title='Derslere Göre Net Durumu',
                     labels={'value': 'Net', 'variable': 'Durum'},
                     barmode='group')
+        fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig, use_container_width=True)
         
         # Detaylı tablo
-        st.subheader("🔍 Detaylı Performans Tablosu")
+        st.markdown(glass("<h3>🔍 Detaylı Performans Tablosu</h3>"), unsafe_allow_html=True)
         st.dataframe(ders_df, use_container_width=True)
         
         # İyileştirme alanları
-        st.subheader("🎯 İyileştirme Alanları")
+        st.markdown(glass("<h3>🎯 İyileştirme Alanları</h3>"), unsafe_allow_html=True)
         en_cok_kalan = ders_df.sort_values('Kalan Net', ascending=False).head(3)
         for i, row in en_cok_kalan.iterrows():
             st.error(f"{row['Ders']}: {row['Kalan Net']:.2f} net kazanma potansiyeli")
@@ -1101,8 +1273,8 @@ with tab5:
 
 # Export butonu
 if 'program_df' in st.session_state:
-    st.markdown("---")
-    st.subheader("📁 Dışa Aktarma")
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown(glass("<h2>📁 Dışa Aktarma</h2>"), unsafe_allow_html=True)
     
     if st.button("💾 Profesyonel Excel Oluştur"):
         try:
@@ -1116,5 +1288,5 @@ if 'program_df' in st.session_state:
         except Exception as e:
             st.error(f"Excel export hatası: {str(e)}")
 
-st.markdown("---")
-st.markdown("💡 **İpucu:** Düzenli olarak deneme sonuçlarınızı güncelleyin ve programınızı yenileyin!")
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown(glass("💡 **İpucu:** Düzenli olarak deneme sonuçlarınızı güncelleyin ve programınızı yenileyin!"), unsafe_allow_html=True)
