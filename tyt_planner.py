@@ -667,45 +667,42 @@ with tab3:
                 # Günlere göre grupla
                 grouped = program_df.groupby(['Gün', 'Tarih'])
                 
+                # Hata düzeltmesi: expanded değerini doğrudan boolean yap
                 for (gun, tarih), group in grouped:
-                    with st.expander(f"🗓️ Gün {gun} - {tarih}", expanded=gun==1):
+                    # İlk gün için genişlet, diğerleri kapalı
+                    is_expanded = (gun == 1)
+                    
+                    with st.expander(f"🗓️ Gün {gun} - {tarih}", expanded=is_expanded):
                         st.markdown(f"**Toplam Çalışma Süresi: {len(group)} zaman dilimi**")
                         
-                        # Derslere göre renkli kartlar
-                        cols = st.columns(3)
-                        for i, (_, row) in enumerate(group.iterrows()):
-                            with cols[i % 3]:
-                                # Zorluk seviyesine göre renk
-                                color = "#FF6B6B" if row['Zorluk'] == "Zor" else "#4ECDC4" if row['Zorluk'] == "Orta" else "#FFD166"
-                                
-                                st.markdown(
-                                    f"""
-                                    <div style="
-                                        background-color: {color};
-                                        border-radius: 10px;
-                                        padding: 15px;
-                                        margin-bottom: 15px;
-                                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                                    ">
-                                        <h4>{row['Zaman']}</h4>
-                                        <h3>{row['Ders']}</h3>
-                                        <p><b>{row['Konu']}</b></p>
-                                        <p>Öncelik: {row['Öncelik Puanı']:.1f}</p>
-                                        <p>Zorluk: {row['Zorluk']}</p>
-                                    </div>
-                                    """,
-                                    unsafe_allow_html=True
-                                )
+                        # Dersleri tablo şeklinde göster
+                        st.dataframe(group[['Zaman', 'Ders', 'Konu', 'Zorluk', 'Öncelik Puanı']], 
+                                    hide_index=True, 
+                                    use_container_width=True)
                 
                 # İlerleme takibi
                 st.subheader("📊 İlerleme Takibi")
-                ders_ilerleme = program_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
-                ders_ilerleme['Tamamlanma Oranı'] = ders_ilerleme['Konu Sayısı'] / len(program_df) * 100
                 
-                # İki grafik yan yana
+                # Haftalık ilerleme grafiği
+                program_df['Hafta'] = (program_df['Gün'] - 1) // 7 + 1
+                haftalik_ilerleme = program_df.groupby('Hafta').size().reset_index(name='Konu Sayısı')
+                
+                fig = px.bar(haftalik_ilerleme,
+                            x='Hafta',
+                            y='Konu Sayısı',
+                            title='Haftalık Konu İlerlemesi',
+                            text='Konu Sayısı',
+                            color='Konu Sayısı',
+                            color_continuous_scale='Blues')
+                fig.update_traces(textposition='outside')
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Ders bazlı ilerleme
+                st.subheader("📚 Derslere Göre Dağılım")
                 col1, col2 = st.columns(2)
                 
                 with col1:
+                    ders_ilerleme = program_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
                     fig = px.pie(ders_ilerleme, 
                                 names='Ders', 
                                 values='Konu Sayısı',
