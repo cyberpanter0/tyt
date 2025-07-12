@@ -8,6 +8,7 @@ from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils.dataframe import dataframe_to_rows
 from groq import Groq
 import numpy as np
+import math
 
 # Groq AI Client
 @st.cache_resource
@@ -22,7 +23,7 @@ def init_groq_client():
 client = init_groq_client()
 
 # Güncellenmiş Konu verileri (yeni soru sayılarıyla)
-KITAP_ONERILERI ={
+KONU_VERILERI = {
     "Türkçe": {
         "Paragraf": {"zorluk": "Zor", "ortalama_soru": 24, "kategori": "Dil"},
         "Cümlede Anlam": {"zorluk": "Orta", "ortalama_soru": 5, "kategori": "Dil"},
@@ -143,7 +144,7 @@ KITAP_ONERILERI = {
         "Kolay": ["Karekök 0 Sosyal Bilimler", "3D TYT Sosyal Bilimler", "Tonguç TYT Sosyal", "Palme Sosyal Bilimler", "Hız ve Renk TYT Sosyal"],
         "Orta": ["ÜçDörtBeş TYT Sosyal Bilimler", "Limit Yayınları TYT Sosyal", "Bilgiseli Sosyal Bilimler", "Endemik Sosyal Bilimler", "Karekök Sosyal Bilimler"]
     },
-    "Din Kültürü": {
+    "Din Kültürü ve Ahlak Bilgisi": {
         "Kolay": ["Karekök 0 Sosyal Bilimler", "3D TYT Sosyal Bilimler", "Tonguç TYT Sosyal", "Palme Sosyal Bilimler", "Hız ve Renk TYT Sosyal"],
         "Orta": ["ÜçDörtBeş TYT Sosyal Bilimler", "Limit Yayınları TYT Sosyal", "Bilgiseli Sosyal Bilimler", "Endemik Sosyal Bilimler", "Karekök Sosyal Bilimler"]
     }
@@ -159,7 +160,7 @@ YOUTUBE_KANALLARI = {
     "Tarih": ["Benim Hocam", "Tonguç Akademi", "Ders Vakti", "Tarih Dünyası", "Sosyal Bilimler Akademisi"],
     "Coğrafya": ["Benim Hocam", "Tonguç Akademi", "Ders Vakti", "Coğrafya Dünyası", "Sosyal Bilimler Akademisi"],
     "Felsefe": ["Benim Hocam", "Tonguç Akademi", "Ders Vakti", "Felsefe Dünyası", "Sosyal Bilimler Akademisi"],
-    "Din Kültürü": ["Benim Hocam", "Tonguç Akademi", "Ders Vakti", "Din Kültürü Akademisi", "Sosyal Bilimler Akademisi"]
+    "Din Kültürü ve Ahlak Bilgisi": ["Benim Hocam", "Tonguç Akademi", "Ders Vakti", "Din Kültürü Akademisi", "Sosyal Bilimler Akademisi"]
 }
 
 # Zaman dilimleri
@@ -584,7 +585,7 @@ with tab1:
         "Türkçe": ["Türkçe"],
         "Matematik": ["Matematik", "Geometri"],
         "Fen Bilimleri": ["Fizik", "Kimya", "Biyoloji"],
-        "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe", "Din Kültürü"]
+        "Sosyal Bilimler": ["Tarih", "Coğrafya", "Felsefe", "Din Kültürü ve Ahlak Bilgisi"]
     }
     
     for grup_adi, dersler in ders_gruplari.items():
@@ -630,9 +631,9 @@ with tab1:
                             value=current_dogru
                         )
                         
-                        # Yanlış cevaplar (düzeltme burada)
+                        # Yanlış cevaplar
                         current_yanlis = st.session_state.veriler[ders][konu]['yanlis']
-                        max_yanlis = max(0, gercek_soru - dogru)
+                        max_yanlis = gercek_soru - dogru
                         
                         if current_yanlis > max_yanlis:
                             current_yanlis = max_yanlis
@@ -860,7 +861,6 @@ with tab3:
     else:
         st.warning("Önce analiz yapın!")
 
-
 # TAB4 İÇERİĞİ
 with tab4:
     st.header("📚 Akıllı Kaynak Önerileri")
@@ -881,11 +881,11 @@ with tab4:
         st.markdown("---")
         
         for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1]['ortalama_puan'], reverse=True):
+            # expanded_value'yu native Python bool'una dönüştür
             expanded_value = bool(bilgi['ortalama_puan'] >= 5)
             
             with st.expander(
-                f"📖 {ders} - Risk Skoru: {bilgi['ortalama_puan']:.1f} "
-                f"({'🔴 Acil' if bilgi['ortalama_puan'] >= 5 else '🟡 Orta' if bilgi['ortalama_puan'] >= 3 else '🟢 İyi'})",
+                f"📖 {ders} - Seviye: {bilgi['seviye']} (Risk: {bilgi['ortalama_puan']:.1f})",
                 expanded=expanded_value
             ):
                 st.subheader(f"📚 {ders} için Kitap Önerileri")
@@ -1003,13 +1003,17 @@ with tab5:
         ders_performans = []
         for ders, bilgi in ders_bazli_ozet.items():
             ders_performans.append({
-                'Ders': ders, 'Net': bilgi['Net'], 'Max Net': bilgi['Max Net'], 
-                'Kalan Net': bilgi['Kalan Net'], 'Başarı Oranı': bilgi['Başarı Oranı']
+                'Ders': ders, 
+                'Net': bilgi['Net'], 
+                'Max Net': bilgi['Max Net'], 
+                'Kalan Net': bilgi['Kalan Net'], 
+                'Başarı Oranı': bilgi['Başarı Oranı']
             })
         
         ders_df = pd.DataFrame(ders_performans)
         fig = px.bar(ders_df, x='Ders', y=['Net', 'Kalan Net'],
-                     title='Derslere Göre Net Durumu', labels={'value': 'Net', 'variable': 'Durum'},
+                     title='Derslere Göre Net Durumu', 
+                     labels={'value': 'Net', 'variable': 'Durum'},
                      barmode='group')
         st.plotly_chart(fig, use_container_width=True)
         
@@ -1020,70 +1024,6 @@ with tab5:
         en_cok_kalan = ders_df.sort_values('Kalan Net', ascending=False).head(3)
         for i, row in en_cok_kalan.iterrows():
             st.error(f"{row['Ders']}: {row['Kalan Net']:.2f} net kazanma potansiyeli")
-    else:
-        st.warning("⚠️ Önce veri girişi yapın!")
-
-# Yeni tab: Öğrenci Özeti
-with tab5:
-    st.header("📝 Öğrenci Genel Özeti")
-    
-    if 'veriler' in st.session_state and st.session_state.veriler:
-        # Performans özetini hesapla
-        genel_ozet, ders_bazli_ozet = hesapla_performans_ozeti(st.session_state.veriler)
-        
-        # Genel istatistikler
-        st.subheader("📊 Genel İstatistikler")
-        col1, col2, col3, col4 = st.columns(4)
-        
-        col1.metric("Toplam Soru", genel_ozet['Toplam Soru'])
-        col2.metric("Toplam Doğru", genel_ozet['Toplam Doğru'])
-        col3.metric("Toplam Yanlış", genel_ozet['Toplam Yanlış'])
-        col4.metric("Toplam Boş", genel_ozet['Toplam Boş'])
-        
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Net", f"{genel_ozet['Net']:.2f}")
-        col2.metric("Max Net", genel_ozet['Max Net'])
-        col3.metric("Kalan Net", f"{genel_ozet['Kalan Net']:.2f}")
-        
-        # Başarı oranı grafiği
-        st.subheader("📈 Başarı Oranı")
-        basari_orani = genel_ozet['Başarı Oranı']
-        st.progress(basari_orani / 100)
-        st.markdown(f"**{basari_orani:.2f}%** Başarı Oranı")
-        
-        # Ders bazlı performans
-        st.subheader("📚 Ders Bazlı Performans")
-        ders_performans = []
-        for ders, bilgi in ders_bazli_ozet.items():
-            ders_performans.append({
-                'Ders': ders,
-                'Net': bilgi['Net'],
-                'Max Net': bilgi['Max Net'],
-                'Kalan Net': bilgi['Kalan Net'],
-                'Başarı Oranı': bilgi['Başarı Oranı']
-            })
-        
-        ders_df = pd.DataFrame(ders_performans)
-        
-        # Net karşılaştırma grafiği
-        fig = px.bar(ders_df, 
-                    x='Ders', 
-                    y=['Net', 'Kalan Net'],
-                    title='Derslere Göre Net Durumu',
-                    labels={'value': 'Net', 'variable': 'Durum'},
-                    barmode='group')
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Detaylı tablo
-        st.subheader("🔍 Detaylı Performans Tablosu")
-        st.dataframe(ders_df, use_container_width=True)
-        
-        # İyileştirme alanları
-        st.subheader("🎯 İyileştirme Alanları")
-        en_cok_kalan = ders_df.sort_values('Kalan Net', ascending=False).head(3)
-        for i, row in en_cok_kalan.iterrows():
-            st.error(f"{row['Ders']}: {row['Kalan Net']:.2f} net kazanma potansiyeli")
-        
     else:
         st.warning("⚠️ Önce veri girişi yapın!")
 
