@@ -661,31 +661,65 @@ with tab3:
                 program_df = pd.DataFrame(program)
                 st.session_state.program_df = program_df
                 
-                # Günlere göre gruplanmış tablo
-                st.subheader("📅 Günlere Göre Program")
-                grouped = program_df.groupby(['Gün', 'Tarih', 'Ders'])['Konu'].apply(list).reset_index()
-                grouped['Konular'] = grouped['Konu'].apply(lambda x: ", ".join(x))
+                # YENİ: Daha okunaklı ders programı
+                st.subheader("📅 Kişiselleştirilmiş Çalışma Programı")
                 
-                pivot_df = grouped.pivot_table(
-                    index='Ders',
-                    columns=['Gün', 'Tarih'],
-                    values='Konular',
-                    aggfunc='first'
-                ).fillna('')
+                # Günlere göre grupla
+                grouped = program_df.groupby(['Gün', 'Tarih'])
                 
-                st.dataframe(pivot_df, use_container_width=True)
+                for (gun, tarih), group in grouped:
+                    with st.expander(f"🗓️ Gün {gun} - {tarih}", expanded=gun==1):
+                        st.markdown(f"**Toplam Çalışma Süresi: {len(group)} zaman dilimi**")
+                        
+                        # Derslere göre renkli kartlar
+                        cols = st.columns(3)
+                        for i, (_, row) in enumerate(group.iterrows()):
+                            with cols[i % 3]:
+                                # Zorluk seviyesine göre renk
+                                color = "#FF6B6B" if row['Zorluk'] == "Zor" else "#4ECDC4" if row['Zorluk'] == "Orta" else "#FFD166"
+                                
+                                st.markdown(
+                                    f"""
+                                    <div style="
+                                        background-color: {color};
+                                        border-radius: 10px;
+                                        padding: 15px;
+                                        margin-bottom: 15px;
+                                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                                    ">
+                                        <h4>{row['Zaman']}</h4>
+                                        <h3>{row['Ders']}</h3>
+                                        <p><b>{row['Konu']}</b></p>
+                                        <p>Öncelik: {row['Öncelik Puanı']:.1f}</p>
+                                        <p>Zorluk: {row['Zorluk']}</p>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
                 
                 # İlerleme takibi
                 st.subheader("📊 İlerleme Takibi")
                 ders_ilerleme = program_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
                 ders_ilerleme['Tamamlanma Oranı'] = ders_ilerleme['Konu Sayısı'] / len(program_df) * 100
                 
-                fig = px.pie(ders_ilerleme, 
-                            names='Ders', 
-                            values='Konu Sayısı',
-                            title='Derslere Göre Konu Dağılımı',
-                            hole=0.3)
-                st.plotly_chart(fig, use_container_width=True)
+                # İki grafik yan yana
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    fig = px.pie(ders_ilerleme, 
+                                names='Ders', 
+                                values='Konu Sayısı',
+                                title='Derslere Göre Konu Dağılımı',
+                                hole=0.3)
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                with col2:
+                    fig = px.bar(ders_ilerleme.sort_values('Konu Sayısı', ascending=False),
+                                x='Ders',
+                                y='Konu Sayısı',
+                                color='Ders',
+                                title='Derslere Göre Konu Sayısı')
+                    st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Önce analiz yapın!")
 
@@ -981,15 +1015,27 @@ with tab4:
         st.subheader("🎯 Genel Durum Analizi")
         col1, col2, col3 = st.columns(3)
         
-        col1.metric("Zayıf Dersler", len([d for d, b in ders_basari.items() if b['ortalama_puan'] >= 5]))
-        col2.metric("İyi Dersler", len([d for d, b in ders_basari.items() if b['ortalama_puan'] < 5]))
-        col3.metric("Genel Risk", f"{sum(b['ortalama_puan'] for b in ders_basari.values()) / len(ders_basari):.1f}")
+        # Hata düzeltmesi: expanded değerini bool'a çevir
+        zayif_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] >= 5]
+        iyi_dersler = [ders for ders, bilgi in ders_basari.items() if bilgi['ortalama_puan'] < 5]
+        ortalama_risk = sum(bilgi['ortalama_puan'] for bilgi in ders_basari.values()) / len(ders_basari) if ders_basari else 0
+        
+        col1.metric("Zayıf Dersler", len(zayif_dersler))
+        col2.metric("İyi Dersler", len(iyi_dersler))
+        col3.metric("Genel Risk Skoru", f"{ortalama_risk:.1f}")
         
         st.markdown("---")
         
         # Ders bazlı öneriler
         for ders, bilgi in sorted(ders_basari.items(), key=lambda x: x[1]['ortalama_puan'], reverse=True):
-            with st.expander(f"📖 {ders} - Risk Skoru: {bilgi['ortalama_puan']:.1f} ({'🔴 Acil' if bilgi['ortalama_puan'] >= 5 else '🟡 Orta' if bilgi['ortalama_puan'] >= 3 else '🟢 İyi'})", expanded=bilgi['ortalama_puan'] >= 5):
+            # Hata düzeltmesi: expanded parametresi bool olmalı
+            expanded_value = bool(bilgi['ortalama_puan'] >= 5)
+            
+            with st.expander(
+                f"📖 {ders} - Risk Skoru: {bilgi['ortalama_puan']:.1f} "
+                f"({'🔴 Acil' if bilgi['ortalama_puan'] >= 5 else '🟡 Orta' if bilgi['ortalama_puan'] >= 3 else '🟢 İyi'})",
+                expanded=expanded_value
+            ):
                 
                 # Kitap önerileri
                 st.subheader(f"📚 {ders} için Kitap Önerileri")
