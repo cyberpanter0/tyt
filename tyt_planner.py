@@ -661,31 +661,65 @@ with tab3:
                 program_df = pd.DataFrame(program)
                 st.session_state.program_df = program_df
                 
-                # YENİ: Daha okunaklı ders programı
-                st.subheader("📅 Kişiselleştirilmiş Çalışma Programı")
+                # YENİ: Takvim görünümünde ders programı
+                st.subheader("📅 Kişiselleştirilmiş Çalışma Takvimi")
                 
-                # Günlere göre grupla
-                grouped = program_df.groupby(['Gün', 'Tarih'])
+                # Takvim görünümü için veriyi hazırla
+                takvim_df = program_df.copy()
+                takvim_df['Tarih'] = pd.to_datetime(takvim_df['Tarih'], format='%d.%m.%Y')
+                takvim_df['Hafta'] = takvim_df['Tarih'].dt.isocalendar().week
+                takvim_df['Gün Adı'] = takvim_df['Tarih'].dt.day_name()
                 
-                # Hata düzeltmesi: expanded değerini doğrudan boolean yap
-                for (gun, tarih), group in grouped:
-                    # İlk gün için genişlet, diğerleri kapalı
-                    is_expanded = (gun == 1)
+                # Haftalara göre grupla
+                haftalar = takvim_df['Hafta'].unique()
+                
+                for hafta in sorted(haftalar):
+                    st.markdown(f"### 🗓️ Hafta {hafta}")
                     
-                    with st.expander(f"🗓️ Gün {gun} - {tarih}", expanded=is_expanded):
-                        st.markdown(f"**Toplam Çalışma Süresi: {len(group)} zaman dilimi**")
+                    # Haftanın günlerini al
+                    hafta_df = takvim_df[takvim_df['Hafta'] == hafta]
+                    gunler = hafta_df['Tarih'].unique()
+                    
+                    # Günlere göre tablolar oluştur
+                    for tarih in sorted(gunler):
+                        tarih_df = hafta_df[hafta_df['Tarih'] == tarih]
+                        tarih_str = tarih.strftime('%d.%m.%Y')
                         
-                        # Dersleri tablo şeklinde göster
-                        st.dataframe(group[['Zaman', 'Ders', 'Konu', 'Zorluk', 'Öncelik Puanı']], 
-                                    hide_index=True, 
-                                    use_container_width=True)
+                        with st.container():
+                            st.markdown(f"#### 📅 {tarih_str} ({tarih_df.iloc[0]['Gün Adı']})")
+                            
+                            # Her zaman dilimi için kart
+                            for _, row in tarih_df.iterrows():
+                                # Zorluk seviyesine göre renk
+                                renk = "#FF6B6B" if row['Zorluk'] == "Zor" else "#4ECDC4" if row['Zorluk'] == "Orta" else "#FFD166"
+                                
+                                st.markdown(
+                                    f"""
+                                    <div style="
+                                        background-color: {renk};
+                                        border-radius: 10px;
+                                        padding: 15px;
+                                        margin-bottom: 15px;
+                                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                                    ">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <div><b>{row['Zaman']}</b></div>
+                                            <div>Öncelik: {row['Öncelik Puanı']:.1f}</div>
+                                        </div>
+                                        <h3 style="margin: 10px 0;">{row['Ders']}</h3>
+                                        <p style="margin: 0;"><b>{row['Konu']}</b></p>
+                                        <p style="margin: 0; font-size: 0.9em;">Zorluk: {row['Zorluk']}</p>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True
+                                )
                 
                 # İlerleme takibi
                 st.subheader("📊 İlerleme Takibi")
                 
                 # Haftalık ilerleme grafiği
-                program_df['Hafta'] = (program_df['Gün'] - 1) // 7 + 1
-                haftalik_ilerleme = program_df.groupby('Hafta').size().reset_index(name='Konu Sayısı')
+                st.markdown("#### 📈 Haftalık Konu İlerlemesi")
+                haftalik_ilerleme = takvim_df.groupby('Hafta').size().reset_index(name='Konu Sayısı')
                 
                 fig = px.bar(haftalik_ilerleme,
                             x='Hafta',
@@ -698,11 +732,11 @@ with tab3:
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Ders bazlı ilerleme
-                st.subheader("📚 Derslere Göre Dağılım")
+                st.markdown("#### 📚 Derslere Göre Dağılım")
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    ders_ilerleme = program_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
+                    ders_ilerleme = takvim_df.groupby('Ders').size().reset_index(name='Konu Sayısı')
                     fig = px.pie(ders_ilerleme, 
                                 names='Ders', 
                                 values='Konu Sayısı',
